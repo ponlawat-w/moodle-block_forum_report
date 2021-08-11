@@ -313,7 +313,7 @@ if (!$startnow) {
         // Multimedia.
         $multimediasql =   "SELECT COUNT(filename) AS filename FROM `mdl_files` INNER JOIN `mdl_forum_posts`
                     ON mdl_files.itemid = mdl_forum_posts.id WHERE mdl_forum_posts.userid = $student->id
-                    AND NOT mdl_files.filesize = 0 AND mdl_forum_posts.attachment = 1 AND  mdl_forum_posts.discussion IN " . $discussionarray;
+                    AND NOT mdl_files.filesize = 0 AND  mdl_forum_posts.discussion IN " . $discussionarray;
         if ($starttime) {
             $multimediasql = $multimediasql . ' AND timecreated>' . $starttime;
         }
