@@ -35,8 +35,8 @@ class block_forum_report extends block_base {
 
     function get_content() {
         global $CFG, $DB, $OUTPUT, $USER,$COURSE;
-        
-        if($this->page->theme->name == "boost"){
+        $context = $this->page->context;
+        if($this->page->theme->name == "boost" && (has_capability('block/forum_report:view', $context))){
             $params['course'] = $COURSE->id;
             $params['startnow'] = 1;
             $url = new moodle_url('/blocks/forum_report/report.php',$params);

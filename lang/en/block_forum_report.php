@@ -36,12 +36,16 @@ $string['showreport'] = 'Show report';
 $string['multimedia'] = 'Multimedia';
 $string['reportstart'] = 'Start';
 $string['reportend'] = 'End';
+//BL Customized Code -->>
+$string['uniqueview'] = 'Unique days viewed';
+$string['uniqueactive'] = 'Unique days active';
+//BL Customized Code <<--
 
 //Reminder mail
 $string['remindsubject'] = 'Reminder to participate in the international exchange';
 $string['remindmessage'] = 'We\'ve noticed you haven\'t been participating in the international online exchange. Please log in and reply to others using the forums. Good luck!';
 $string['sentreminder'] = 'Sent a reminder.';
 
-$string['forum_report:sendreminder']= 'Send reminder';
-$string['forum_report:addinstance']= 'Add a new forum report block';
-$string['forum_report:view']= 'View forum report';
+$string['forum_report:sendreminder'] = 'Send reminder';
+$string['forum_report:addinstance'] = 'Add a new forum report block';
+$string['forum_report:view'] = 'View forum report';
