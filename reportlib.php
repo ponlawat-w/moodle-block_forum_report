@@ -7,6 +7,13 @@ class report_form extends moodleform
     public function definition()
     {
         global $CFG, $DB, $COURSE;
+        $perpage = optional_param('perpage', 0, PARAM_RAW);
+        $countryid = optional_param('country', '', PARAM_RAW);
+        $groupid = optional_param('group', 0, PARAM_INT);
+        $forumid = optional_param('forum', 0, PARAM_INT);
+        $start = optional_param('start', '', PARAM_RAW);
+        $end = optional_param('end', '', PARAM_RAW);
+
         $mform = $this->_form;
 
         $mform->addElement('header', 'filter', get_string('reportfilter', 'block_forum_report'));
@@ -15,31 +22,37 @@ class report_form extends moodleform
             $forums[$forum->id] = $forum->name;
         }
         $forums = array('0' => get_string('all')) + $forums;
-        $mform->addElement('select', 'forum', get_string('forum', 'forum'), $forums);
-
+        $select_forum = $mform->addElement('select', 'forum', get_string('forum', 'forum'), $forums);
+        $select_forum->setSelected("$forumid");
         $allgroups = groups_get_all_groups($COURSE->id);
         if (count($allgroups)) {
             $groupoptions = array('0' => get_string('allgroups'));
             foreach ($allgroups as $group) {
                 $groupoptions[$group->id] = $group->name;
             }
-            $mform->addElement('select', 'group', get_string('group'), $groupoptions);
+            $select_group = $mform->addElement('select', 'group', get_string('group'), $groupoptions);
+            $select_group->setSelected("$groupid");
         }
 
         $countries = get_string_manager()->get_list_of_countries();
 
         $countrychoices = get_string_manager()->get_list_of_countries();
         $countrychoices = array('0' => get_string('all')) + $countrychoices;
-        $mform->addElement('select', 'country', get_string('country'), $countrychoices);
-
+        $select_country = $mform->addElement('select', 'country', get_string('country'), $countrychoices);
+        $select_country->setSelected("$countryid");
         $mform->addElement('hidden', 'course', $COURSE->id);
         $mform->setType('course', PARAM_INT);
 
         // Open and close dates.
         $mform->addElement('date_time_selector', 'starttime', get_string('reportstart', 'block_forum_report'), array('optional' => true, 'startyear' => 2000, 'stopyear' => date("Y"), 'step' => 5));
-
+        $mform->setDefault('starttime', $start);
         $mform->addElement('date_time_selector', 'endtime', get_string('reportend', 'block_forum_report'), array('optional' => true, 'startyear' => 2000, 'stopyear' => date("Y"), 'step' => 5));
-
+        $mform->setDefault('endtime', $end);
+        //BL Customization
+        $Perpage = array('0' => 'All', '5' => '5', '10' => '10', '20' => '20', '30' => '30', '50' => '50', '100' => '100');
+        $select = $mform->addElement('select', 'perpage', get_string('perpage', 'block_forum_report'), $Perpage);
+        $select->setSelected("$perpage");
+        //BL Customization
         $mform->addElement('submit', 'changefilter', get_string('showreport', 'block_forum_report'));
     }
 }

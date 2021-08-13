@@ -39,6 +39,7 @@ $string['reportend'] = 'End';
 //BL Customized Code -->>
 $string['uniqueview'] = 'Unique days viewed';
 $string['uniqueactive'] = 'Unique days active';
+$string['perpage'] = 'No. of records per page';
 //BL Customized Code <<--
 
 //Reminder mail

@@ -11,6 +11,8 @@ $groupid = optional_param('group', 0, PARAM_INT);
 $countryid = optional_param('country', '', PARAM_RAW);
 $start = optional_param('start', '', PARAM_RAW);
 $end = optional_param('end', '', PARAM_RAW);
+$perpage = optional_param('perpage', 0, PARAM_RAW);
+$page = optional_param('page', 0, PARAM_RAW);
 $tsort = optional_param('tsort', 0, PARAM_RAW);
 if (strpos($tsort, 'name') !== FALSE) {
     $orderbyname = $tsort;
@@ -80,6 +82,16 @@ if (isset($fromform->starttime)) {
 } else {
     $starttime = 0;
 }
+//BL Customization
+if (isset($page)) {
+    $paramstr .= '&page=' . $page;
+    $params['page'] = $page;
+}
+if (isset($perpage)) {
+    $paramstr .= '&perpage=' . $perpage;
+    $params['perpage'] = $perpage;
+}
+//BL Customization
 if (isset($fromform->endtime)) {
     $endtime = $fromform->endtime;
     $params['end'] = $endtime;
@@ -327,7 +339,7 @@ if (!$startnow) {
         }
         $studentdata->multimedia =  $multimedianum;
         //BL Customization
-        
+
         //First post & Last post
         $firstpostsql = 'SELECT MIN(created) FROM {forum_posts} WHERE userid=' . $student->id . ' AND discussion IN ' . $discussionarray;
         if ($posts || $replies) {
@@ -365,7 +377,13 @@ if (!$startnow) {
     if ($sortby && !$orderbyname) {
         usort($data, forum_report_sort($sortby));
     }
-
+    //BL Customization
+    //Number of records per page
+    if ($perpage) {
+        $table->pagesize($perpage, count($data));
+        $data = array_slice($data, $page * $perpage, $perpage);
+    }
+    //BL Customization
     foreach ($data as $row) {
         //Notification
         //$output = $OUTPUT->pix_icon('t/subscribed', get_string('sendreminder', 'block_forum_report'), 'mod_forum');
