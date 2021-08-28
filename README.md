@@ -1,6 +1,6 @@
 # moodle-block_forum_report
 
-* This feature has been merged into Moodle. It played a major role, but we still have a little development.
+* The basics of this report have been merged into the Forum Summary Report in Moodle. However, we have added new columns and improved the content since that time.
 
 ## 1. Install
 
