@@ -113,8 +113,10 @@ $PAGE->requires->css('/blocks/forum_report/styles.css');
 $PAGE->set_url($CFG->wwwroot . '/blocks/forum_report/report.php', $params);
 $PAGE->navbar->add('forum_report');
 $PAGE->set_heading($course->fullname);
+$PAGE->requires->js_call_amd('block_forum_report/script', 'init');
 echo $OUTPUT->header();
 $mform->display();
+echo html_writer::tag('input','',array('type'=>'hidden','id'=>'my_courseid','value'=>$courseid));
 
 $strname = get_string('fullname');
 $strfirstname = get_string('firstname');
@@ -133,9 +135,9 @@ $strgroup = get_string('group');
 $strmultimedia = get_string('multimedia', 'block_forum_report');
 $struniqueview = get_string('uniqueview', 'block_forum_report');
 $struniqueactive = get_string('uniqueactive', 'block_forum_report');
+
 if (!$startnow) {
     echo '<br>';
-    echo '<a href="download.php' . $paramstr . '"><button class="btn btn-primary ">' . get_string('download') . '</button></a><br><br>';
 
 
     $table = new flexible_table('forum_report_table');

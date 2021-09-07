@@ -54,6 +54,8 @@ class report_form extends moodleform
         $select->setSelected("$perpage");
         //BL Customization
         $mform->addElement('submit', 'changefilter', get_string('showreport', 'block_forum_report'));
+        $mform->addElement('button', 'download', get_string('download'),array('class'=>'download' ,'style'=>'background-color:#0f6fc5; color:#fff;border-color:#0a4e8a'));
+
     }
 }
 
