@@ -312,7 +312,7 @@ if (!$startnow) {
          if($posts){
            foreach($posts as $pdata){
              $multimedianum += get_mulutimedia_num($pdata->message);
-             print_object($pdata->message);
+             //print_object($pdata->message);
            }
          }
          if($replies){
