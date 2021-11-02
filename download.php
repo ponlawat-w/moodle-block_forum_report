@@ -8,8 +8,8 @@ $forumid = optional_param('forum', 0, PARAM_INT);
 $courseid = required_param('course', PARAM_INT);
 $countryfilter = optional_param('country', 0, PARAM_RAW);
 $groupfilter = optional_param('group', 0, PARAM_INT);
-$start = optional_param('start', '', PARAM_RAW);
-$end = optional_param('end', '', PARAM_RAW);
+$starttime = optional_param('starttime', '', PARAM_RAW);
+$endtime = optional_param('endtime', '', PARAM_RAW);
 $course = $DB->get_record('course', array('id' => $courseid));
 require_course_login($course);
 $coursecontext = context_course::instance($course->id);
@@ -25,20 +25,20 @@ $students = get_users_by_capability($coursecontext, 'mod/forum:viewdiscussion');
 
 $countries = get_string_manager()->get_list_of_countries();
 
-if (isset($fromform->starttime)) {
-    $starttime = $fromform->starttime;
-} elseif ($start) {
-    $starttime = $start;
-} else {
-    $starttime = 0;
-}
-if (isset($fromform->endtime)) {
-    $endtime = $fromform->endtime;
-} elseif ($end) {
-    $endtime = $end;
-} else {
-    $endtime = 0;
-}
+//if (isset($fromform->starttime)) {
+//    $starttime = $fromform->starttime;
+//} elseif ($start) {
+//    $starttime = $start;
+//} else {
+//    $starttime = 0;
+//}
+//if (isset($fromform->endtime)) {
+//    $endtime = $fromform->endtime;
+//} elseif ($end) {
+//    $endtime = $end;
+//} else {
+//    $endtime = 0;
+//}
 
 if ($forumid) {
     $discussions = $DB->get_records('forum_discussions', array('forum' => $forum->id));
@@ -181,22 +181,34 @@ foreach ($students as $student) {
     $studentdata[] = $wordcount;
     //BL Customization
     //Multimedia
-    $multimedianum = 0;
-    $multimediasql =   "SELECT COUNT(filename) AS filename FROM `mdl_files` INNER JOIN `mdl_forum_posts`
-                        ON mdl_files.itemid = mdl_forum_posts.id WHERE mdl_forum_posts.userid = $student->id
-                        AND NOT mdl_files.filesize = 0  AND  mdl_forum_posts.discussion IN " . $discussionarray;
-    if ($starttime) {
-        $multimediasql = $multimediasql . ' AND timecreated>' . $starttime;
-    }
-    if ($endtime) {
-        $multimediasql = $multimediasql . ' AND timecreated<' . $endtime;
-    }
-    $multimediacount = $DB->get_records_sql($multimediasql);
-    foreach ($multimediacount as $num) {
-        $multimedianum = $num->filename;
-    }
-    $studentdata[] =  $multimedianum;
+//    $multimedianum = 0;
+//    $multimediasql =   "SELECT COUNT(filename) AS filename FROM `mdl_files` INNER JOIN `mdl_forum_posts`
+//                        ON mdl_files.itemid = mdl_forum_posts.id WHERE mdl_forum_posts.userid = $student->id
+//                        AND NOT mdl_files.filesize = 0  AND  mdl_forum_posts.discussion IN " . $discussionarray;
+//    if ($starttime) {
+//        $multimediasql = $multimediasql . ' AND timecreated>' . $starttime;
+//    }
+//    if ($endtime) {
+//        $multimediasql = $multimediasql . ' AND timecreated<' . $endtime;
+//    }
+//    $multimediacount = $DB->get_records_sql($multimediasql);
+//    foreach ($multimediacount as $num) {
+//        $multimedianum = $num->filename;
+//    }
+//    $studentdata[] =  $multimedianum;
     //BL Customization
+    $multimedianum = 0;
+    if ($posts) {
+        foreach ($posts as $pdata) {
+            $multimedianum += get_mulutimedia_num($pdata->message);
+        }
+    }
+    if ($replies) {
+        foreach ($replies as $reply) {
+            $multimedianum += get_mulutimedia_num($reply->message);
+        }
+    }
+    $studentdata[] = $multimedianum;
     //First post & Last post
     if ($posts || $replies) {
         $firstpostsql = 'SELECT MIN(created) FROM {forum_posts} WHERE userid=' . $student->id . ' AND discussion IN ' . $discussionarray;

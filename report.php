@@ -309,37 +309,36 @@ if (!$startnow) {
         $studentdata->wordcount = $wordcount;
 
         $multimedianum = 0;
-        // if($posts){
-        //   foreach($posts as $pdata){
-        //     $multimedianum += get_mulutimedia_num($pdata->message);
-        //     print_object($pdata->message);
-        //   }
-        // }
-        // if($replies){
-        //   foreach($replies as $reply){
-        //     $multimedianum += get_mulutimedia_num($reply->message);
-        //     print_object($reply->message);
+         if($posts){
+           foreach($posts as $pdata){
+             $multimedianum += get_mulutimedia_num($pdata->message);
+             print_object($pdata->message);
+           }
+         }
+         if($replies){
+           foreach($replies as $reply){
+             $multimedianum += get_mulutimedia_num($reply->message);
 
-        //   }
-        // }
-        // $studentdata->multimedia = $multimedianum;
+           }
+         }
+         $studentdata->multimedia = $multimedianum;
 
         //BL Customization
         // Multimedia.
-        $multimediasql =   "SELECT COUNT(filename) AS filename FROM `mdl_files` INNER JOIN `mdl_forum_posts`
-                    ON mdl_files.itemid = mdl_forum_posts.id WHERE mdl_forum_posts.userid = $student->id
-                    AND NOT mdl_files.filesize = 0  AND  mdl_forum_posts.discussion IN " . $discussionarray;
-        if ($starttime) {
-            $multimediasql = $multimediasql . ' AND timecreated>' . $starttime;
-        }
-        if ($endtime) {
-            $multimediasql = $multimediasql . ' AND timecreated<' . $endtime;
-        }
-        $multimediacount = $DB->get_records_sql($multimediasql);
-        foreach ($multimediacount as $num) {
-            $multimedianum = $num->filename;
-        }
-        $studentdata->multimedia =  $multimedianum;
+//        $multimediasql =   "SELECT COUNT(filename) AS filename FROM `mdl_files` INNER JOIN `mdl_forum_posts`
+//                    ON mdl_files.itemid = mdl_forum_posts.id WHERE mdl_forum_posts.userid = $student->id
+//                    AND NOT mdl_files.filesize = 0  AND  mdl_forum_posts.discussion IN " . $discussionarray;
+//        if ($starttime) {
+//            $multimediasql = $multimediasql . ' AND timecreated>' . $starttime;
+//        }
+//        if ($endtime) {
+//            $multimediasql = $multimediasql . ' AND timecreated<' . $endtime;
+//        }
+//        $multimediacount = $DB->get_records_sql($multimediasql);
+//        foreach ($multimediacount as $num) {
+//            $multimedianum = $num->filename;
+//        }
+//        $studentdata->multimedia =  $multimedianum;
         //BL Customization
 
         //First post & Last post
