@@ -198,17 +198,41 @@ foreach ($students as $student) {
 //    $studentdata[] =  $multimedianum;
     //BL Customization
     $multimedianum = 0;
-    if ($posts) {
-        foreach ($posts as $pdata) {
-            $multimedianum += get_mulutimedia_num($pdata->message);
-        }
-    }
-    if ($replies) {
-        foreach ($replies as $reply) {
-            $multimedianum += get_mulutimedia_num($reply->message);
-        }
-    }
+    $imgnum = 0;
+    $videonum = 0;
+    $audionum = 0;
+    $linknum = 0;
+     if($posts){
+       foreach($posts as $pdata){
+         $multimedia = get_mulutimedia_num($pdata->message);
+         if (!$multimedia) {
+            continue;
+         }
+         $multimedianum += $multimedia->num;
+         $imgnum += $multimedia->img;
+         $videonum += $multimedia->video;
+         $audionum += $multimedia->audio;
+         $linknum += $multimedia->link;
+       }
+     }
+     if($replies){
+       foreach($replies as $reply){
+         $multimedia = get_mulutimedia_num($reply->message);
+         if (!$multimedia) {
+            continue;
+         }
+         $multimedianum += $multimedia->num;
+         $imgnum += $multimedia->img;
+         $videonum += $multimedia->video;
+         $audionum += $multimedia->audio;
+         $linknum += $multimedia->link;
+       }
+     }
     $studentdata[] = $multimedianum;
+    $studentdata[] = $imgnum;
+    $studentdata[] = $videonum;
+    $studentdata[] = $audionum;
+    $studentdata[] = $linknum;
 
     // Engagement levels
     $engagement = block_forum_report_get_engagement($student->id, $discussionarray);
@@ -257,7 +281,7 @@ $csvexport->set_filename($filename);
 $csvexport->add_data(array(
     'Username', 'Name', 'Group', 'Country', 'Instituion',
     'Posts', 'Replies', 'Unique days active', 'Views', 'Unique days viewed',
-    'Word count', 'Multimedia',
+    'Word count', 'Multimedia', 'Images', 'Videos', 'Audios', 'Links',
     'Engagement#1', 'Engagement#2', 'Engagement#3', 'Engagement#4', 'Average Engagement', 'Maximum Engagement',
     'First post', 'Last post'
 ));
