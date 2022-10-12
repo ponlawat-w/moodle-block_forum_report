@@ -209,6 +209,16 @@ foreach ($students as $student) {
         }
     }
     $studentdata[] = $multimedianum;
+
+    // Engagement levels
+    $engagement = block_forum_report_get_engagement($student->id, $discussionarray);
+    $studentdata[] = $engagement->levels[0];
+    $studentdata[] = $engagement->levels[1];
+    $studentdata[] = $engagement->levels[2];
+    $studentdata[] = $engagement->levels[3];
+    $studentdata[] = $engagement->average;
+    $studentdata[] = $engagement->maximum;
+
     //First post & Last post
     if ($posts || $replies) {
         $firstpostsql = 'SELECT MIN(created) FROM {forum_posts} WHERE userid=' . $student->id . ' AND discussion IN ' . $discussionarray;
@@ -244,7 +254,13 @@ foreach ($students as $student) {
 $csvexport = new \csv_export_writer();
 $filename = 'forum-report';
 $csvexport->set_filename($filename);
-$csvexport->add_data(array('Username', 'Name', 'Group', 'Country', 'Instituion', 'Posts', 'Replies', 'Unique days active', 'Views', 'Unique days viewed', 'Word count', 'Multimedia', 'First post', 'Last post'));
+$csvexport->add_data(array(
+    'Username', 'Name', 'Group', 'Country', 'Instituion',
+    'Posts', 'Replies', 'Unique days active', 'Views', 'Unique days viewed',
+    'Word count', 'Multimedia',
+    'Engagement#1', 'Engagement#2', 'Engagement#3', 'Engagement#4', 'Average Engagement', 'Maximum Engagement',
+    'First post', 'Last post'
+));
 foreach ($data as $line) {
     $csvexport->add_data($line);
 }
