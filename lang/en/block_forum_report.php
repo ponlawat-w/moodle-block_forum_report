@@ -40,6 +40,10 @@ $string['wordcount'] = 'Word count';
 $string['reportfilter'] = 'Report filter';
 $string['showreport'] = 'Show report';
 $string['multimedia'] = 'Multimedia';
+$string['multimedia_image'] = 'Images';
+$string['multimedia_video'] = 'Videos';
+$string['multimedia_audio'] = 'Audios';
+$string['multimedia_link'] = 'Links';
 $string['reportstart'] = 'Start';
 $string['reportend'] = 'End';
 //BL Customized Code -->>

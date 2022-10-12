@@ -106,7 +106,12 @@ function get_mulutimedia_num($text)
 
     // Looking for tags.
     $matches = preg_split('/(<[^>]*>)/i', $text, -1, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE);
-    $count = 0;
+    $count = new stdClass();
+    $count->num = 0;
+    $count->img = 0;
+    $count->video = 0;
+    $count->audio = 0;
+    $count->link = 0;
     if (!$matches) {
         return 0;
     } else {
@@ -119,9 +124,19 @@ function get_mulutimedia_num($text)
             if (preg_match('/<(a|img|video|audio)\s[^>]*/', $tag, $tagmatches)) {
                 $tagname = strtolower($tagmatches[1]);
                 if ($tagname === "a" && preg_match($re, $tag)) {
-                    $count++;
+                    $count->num++;
+                    $count->link++;
                 } else {
-                    $count++;
+                    if ($tagname == "img") {
+                        $count->img++;
+                        $count->num++;
+                    } else if ($tagname == "video") {
+                        $count->video++;
+                        $count->num++;
+                    } else if ($tagname == "audio") {
+                        $count->audio++;
+                        $count->num++;
+                    }
                 }
             }
         }
