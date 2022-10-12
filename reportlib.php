@@ -128,3 +128,51 @@ function get_mulutimedia_num($text)
     }
     return $count;
 }
+
+function block_forum_report_get_engagement($userid, $discussionarray) {
+    global $DB;
+    $posts = $DB->get_records_sql('SELECT * FROM {forum_posts} WHERE userid = ? AND discussion IN ' . $discussionarray . ' AND parent > 0 ORDER BY id', [$userid]);
+    $depths = [];
+    $maxdepth = 0;
+    $sumdepth = 0;
+    $levels = [0, 0, 0, 0];
+    foreach ($posts as $post) {
+        if (!isset($depths[$post->id])) {
+            $parent = $post->parent;
+            $depths[$post->id] = 1;
+            while ($parent > 0) {
+                if ($parentpost = $DB->get_record('forum_posts', ['id' => $parent])) {
+                    if ($parentpost->userid == $userid) {
+                        if (isset($depths[$parentpost->id])) {
+                            unset($depths[$parentpost->id]);
+                        }
+                        $depths[$parentpost->id] = 0;
+                        $depths[$post->id]++;
+                    }
+                    $parent = $parentpost->parent;
+                } else {
+                    $depths[$post->id] = 0;
+                    continue;
+                }
+            }
+
+            if ($depths[$post->id] < 4) {
+                $levels[$depths[$post->id] - 1]++;
+            } else {
+                $levels[3]++;
+            }
+
+            $maxdepth = max($maxdepth, $depths[$post->id]);
+            $sumdepth += $depths[$post->id];
+        }
+    }
+
+    $avgdepth = count($posts) ? round($sumdepth / count($posts), 2) : null;
+
+    $result = new stdClass();
+    $result->levels = $levels;
+    $result->maximum = $maxdepth;
+    $result->average = $avgdepth;
+
+    return $result;
+}
