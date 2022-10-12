@@ -126,6 +126,16 @@ $strposts = get_string('posts');
 $strviews = get_string('views', 'block_forum_report');
 $strreplies = get_string('replies', 'block_forum_report');
 $strwordcount = get_string('wordcount', 'block_forum_report');
+$strimage = get_string('multimedia_image', 'block_forum_report');
+$strvideo = get_string('multimedia_video', 'block_forum_report');
+$straudio = get_string('multimedia_audio', 'block_forum_report');
+$strlink = get_string('multimedia_link', 'block_forum_report');
+$strel1 = get_string('el1', 'block_forum_report');
+$strel2 = get_string('el2', 'block_forum_report');
+$strel3 = get_string('el3', 'block_forum_report');
+$strel4up = get_string('el4up', 'block_forum_report');
+$strelavg = get_string('elavg', 'block_forum_report');
+$strelmax = get_string('elmax', 'block_forum_report');
 $strfp = get_string('firstpost', 'block_forum_report');
 $strlp = get_string('lastpost', 'block_forum_report');
 $strsr = get_string('sendreminder', 'block_forum_report');
@@ -144,8 +154,19 @@ if (!$startnow) {
     //$table->head = array($strname,$strcounrty,$strposts,$strreplies,$strwordcount,$strviews,$strfp,$strlp,$strsr,$strcl);
     //$table->define_align = array ("center","center","center","center","center","center","center","center","center","center");
     $table->define_baseurl($PAGE->url);
-    $table->define_columns(array('fullname', 'group', 'country', 'institution', 'posts', 'replies', 'unique_activedays', 'views', 'uniqueviewdays', 'wordcount', 'multimedia', 'firstpost', 'lastpost', 'action'));
-    $table->define_headers(array($strname, $strgroup, $strcounrty, $strinstituion, $strposts, $strreplies, $struniqueactive, $strviews, $struniqueview, $strwordcount,  $strmultimedia, $strfp, $strlp, ''));
+    $table->define_columns(array(
+        'fullname', 'group', 'country', 'institution',
+        'posts', 'replies', 'unique_activedays', 'views', 'uniqueviewdays',
+        'wordcount', 'multimedia', 'multimedia_image', 'multimedia_video', 'multimedia_audio', 'multimedia_link',
+        'el1', 'el2', 'el3', 'el4up', 'elavg', 'elmax',
+        'firstpost', 'lastpost', 'action'
+    ));
+    $table->define_headers(array(
+        $strname, $strgroup, $strcounrty, $strinstituion,
+        $strposts, $strreplies, $struniqueactive, $strviews, $struniqueview,
+        $strwordcount, $strmultimedia, $strimage, $strvideo, $straudio, $strlink,
+        $strel1,$strel2,$strel3,$strel4up,$strelavg,$strelmax,
+        $strfp, $strlp, ''));
     $table->sortable(true);
     $table->collapsible(true);
     $table->set_attribute('class', 'admintable generaltable');
@@ -309,19 +330,43 @@ if (!$startnow) {
         $studentdata->wordcount = $wordcount;
 
         $multimedianum = 0;
+        $imgnum = 0;
+        $videonum = 0;
+        $audionum = 0;
+        $linknum = 0;
          if($posts){
            foreach($posts as $pdata){
-             $multimedianum += get_mulutimedia_num($pdata->message);
+             $multimedia = get_mulutimedia_num($pdata->message);
+             if (!$multimedia) {
+                continue;
+             }
+             $multimedianum += $multimedia->num;
+             $imgnum += $multimedia->img;
+             $videonum += $multimedia->video;
+             $audionum += $multimedia->audio;
+             $linknum += $multimedia->link;
              //print_object($pdata->message);
            }
          }
          if($replies){
            foreach($replies as $reply){
-             $multimedianum += get_mulutimedia_num($reply->message);
+             $multimedia = get_mulutimedia_num($reply->message);
+             if (!$multimedia) {
+                continue;
+             }
+             $multimedianum += $multimedia->num;
+             $imgnum += $multimedia->img;
+             $videonum += $multimedia->video;
+             $audionum += $multimedia->audio;
+             $linknum += $multimedia->link;
 
            }
          }
          $studentdata->multimedia = $multimedianum;
+         $studentdata->multimedia_image = $imgnum;
+         $studentdata->multimedia_video = $videonum;
+         $studentdata->multimedia_audio = $audionum;
+         $studentdata->multimedia_link = $linknum;
 
         //BL Customization
         // Multimedia.
@@ -340,6 +385,15 @@ if (!$startnow) {
 //        }
 //        $studentdata->multimedia =  $multimedianum;
         //BL Customization
+
+        // Engagement levels
+        $engagement = block_forum_report_get_engagement($student->id, $discussionarray);
+        $studentdata->el1 = $engagement->levels[0];
+        $studentdata->el2 = $engagement->levels[1];
+        $studentdata->el3 = $engagement->levels[2];
+        $studentdata->el4up = $engagement->levels[3];
+        $studentdata->elavg = $engagement->average;
+        $studentdata->elmax = $engagement->maximum;
 
         //First post & Last post
         $firstpostsql = 'SELECT MIN(created) FROM {forum_posts} WHERE userid=' . $student->id . ' AND discussion IN ' . $discussionarray;
@@ -394,7 +448,12 @@ if (!$startnow) {
         $compurl = $CFG->wwwroot . '/report/outline/user.php?id=' . $row->id . '&course=' . $course->id . '&mode=complete';
         $complink = '<a href="' . $compurl . '"><span class="forumreporticon-profile" title="Complete reports"></span></a>';
         //$table->data[] = array($row->name,$row->country,$row->posts,$row->replies,$row->wordcount,$row->views,$row->firstpost,$row->lastpost,$sendreminder,$complink);
-        $trdata = array($row->name, $row->group, $row->country, $row->institution, $row->posts, $row->replies, $row->unique_activedays, $row->views, $row->uniqueviewdays, $row->wordcount, $row->multimedia, $row->firstpost, $row->lastpost, $sendreminder . $complink);
+        $trdata = array(
+            $row->name, $row->group, $row->country, $row->institution,
+            $row->posts, $row->replies, $row->unique_activedays, $row->views, $row->uniqueviewdays,
+            $row->wordcount, $row->multimedia, $row->multimedia_image, $row->multimedia_video, $row->multimedia_audio, $row->multimedia_link,
+            $row->el1, $row->el2, $row->el3, $row->el4up, $row->elavg, $row->elmax,
+            $row->firstpost, $row->lastpost, $sendreminder . $complink);
         $table->add_data($trdata);
     }
     echo '<input type="hidden" name="course" id="courseid" value="' . $courseid . '">';

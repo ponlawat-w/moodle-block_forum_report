@@ -106,7 +106,12 @@ function get_mulutimedia_num($text)
 
     // Looking for tags.
     $matches = preg_split('/(<[^>]*>)/i', $text, -1, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE);
-    $count = 0;
+    $count = new stdClass();
+    $count->num = 0;
+    $count->img = 0;
+    $count->video = 0;
+    $count->audio = 0;
+    $count->link = 0;
     if (!$matches) {
         return 0;
     } else {
@@ -119,12 +124,70 @@ function get_mulutimedia_num($text)
             if (preg_match('/<(a|img|video|audio)\s[^>]*/', $tag, $tagmatches)) {
                 $tagname = strtolower($tagmatches[1]);
                 if ($tagname === "a" && preg_match($re, $tag)) {
-                    $count++;
+                    $count->num++;
+                    $count->link++;
                 } else {
-                    $count++;
+                    if ($tagname == "img") {
+                        $count->img++;
+                        $count->num++;
+                    } else if ($tagname == "video") {
+                        $count->video++;
+                        $count->num++;
+                    } else if ($tagname == "audio") {
+                        $count->audio++;
+                        $count->num++;
+                    }
                 }
             }
         }
     }
     return $count;
+}
+
+function block_forum_report_get_engagement($userid, $discussionarray) {
+    global $DB;
+    $posts = $DB->get_records_sql('SELECT * FROM {forum_posts} WHERE userid = ? AND discussion IN ' . $discussionarray . ' AND parent > 0 ORDER BY id', [$userid]);
+    $depths = [];
+    $maxdepth = 0;
+    $sumdepth = 0;
+    $levels = [0, 0, 0, 0];
+    foreach ($posts as $post) {
+        if (!isset($depths[$post->id])) {
+            $parent = $post->parent;
+            $depths[$post->id] = 1;
+            while ($parent > 0) {
+                if ($parentpost = $DB->get_record('forum_posts', ['id' => $parent])) {
+                    if ($parentpost->userid == $userid) {
+                        if (isset($depths[$parentpost->id])) {
+                            unset($depths[$parentpost->id]);
+                        }
+                        $depths[$parentpost->id] = 0;
+                        $depths[$post->id]++;
+                    }
+                    $parent = $parentpost->parent;
+                } else {
+                    $depths[$post->id] = 0;
+                    continue;
+                }
+            }
+
+            if ($depths[$post->id] < 4) {
+                $levels[$depths[$post->id] - 1]++;
+            } else {
+                $levels[3]++;
+            }
+
+            $maxdepth = max($maxdepth, $depths[$post->id]);
+            $sumdepth += $depths[$post->id];
+        }
+    }
+
+    $avgdepth = count($posts) ? round($sumdepth / count($posts), 2) : null;
+
+    $result = new stdClass();
+    $result->levels = $levels;
+    $result->maximum = $maxdepth;
+    $result->average = $avgdepth;
+
+    return $result;
 }
