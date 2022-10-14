@@ -73,7 +73,8 @@ foreach ($students as $student) {
     //Username
     $studentdata[] = $student->username;
     //Name
-    $studentdata[] = fullname($student);
+    $studentdata[] = $student->firstname;
+    $studentdata[] = $student->lastname;
     //Group
     $tempgroups = array();
     foreach ($studentgroups as $studentgroup) {
@@ -279,7 +280,7 @@ $csvexport = new \csv_export_writer();
 $filename = 'forum-report';
 $csvexport->set_filename($filename);
 $csvexport->add_data(array(
-    'Username', 'Name', 'Group', 'Country', 'Instituion',
+    'Username', 'First Name', 'Last Name', 'Group', 'Country', 'Instituion',
     'Posts', 'Replies', 'Unique days active', 'Views', 'Unique days viewed',
     'Word count', 'Multimedia', 'Images', 'Videos', 'Audios', 'Links',
     'Engagement#1', 'Engagement#2', 'Engagement#3', 'Engagement#4', 'Average Engagement', 'Maximum Engagement',

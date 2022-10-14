@@ -155,14 +155,14 @@ if (!$startnow) {
     //$table->define_align = array ("center","center","center","center","center","center","center","center","center","center");
     $table->define_baseurl($PAGE->url);
     $table->define_columns(array(
-        'fullname', 'group', 'country', 'institution',
+        'firstname', 'lastname', 'group', 'country', 'institution',
         'posts', 'replies', 'unique_activedays', 'views', 'uniqueviewdays',
         'wordcount', 'multimedia', 'multimedia_image', 'multimedia_video', 'multimedia_audio', 'multimedia_link',
         'el1', 'el2', 'el3', 'el4up', 'elavg', 'elmax',
         'firstpost', 'lastpost', 'action'
     ));
     $table->define_headers(array(
-        $strname, $strgroup, $strcounrty, $strinstituion,
+        $strfirstname, $strlastname, $strgroup, $strcounrty, $strinstituion,
         $strposts, $strreplies, $struniqueactive, $strviews, $struniqueview,
         $strwordcount, $strmultimedia, $strimage, $strvideo, $straudio, $strlink,
         $strel1,$strel2,$strel3,$strel4up,$strelavg,$strelmax,
@@ -228,7 +228,8 @@ if (!$startnow) {
         $studentdata->id = $student->id;
 
         //Name
-        $studentdata->name = fullname($student);
+        $studentdata->firstname = $student->firstname;
+        $studentdata->lastname = $student->lastname;
 
         //Countryfullname($student);
         $studentdata->country = @$countries[$student->country];
@@ -449,7 +450,7 @@ if (!$startnow) {
         $complink = '<a href="' . $compurl . '"><span class="forumreporticon-profile" title="Complete reports"></span></a>';
         //$table->data[] = array($row->name,$row->country,$row->posts,$row->replies,$row->wordcount,$row->views,$row->firstpost,$row->lastpost,$sendreminder,$complink);
         $trdata = array(
-            $row->name, $row->group, $row->country, $row->institution,
+            $row->firstname, $row->lastname, $row->group, $row->country, $row->institution,
             $row->posts, $row->replies, $row->unique_activedays, $row->views, $row->uniqueviewdays,
             $row->wordcount, $row->multimedia, $row->multimedia_image, $row->multimedia_video, $row->multimedia_audio, $row->multimedia_link,
             $row->el1, $row->el2, $row->el3, $row->el4up, $row->elavg, $row->elmax,
