@@ -42,8 +42,10 @@ $countries = get_string_manager()->get_list_of_countries();
 
 if ($forumid) {
     $discussions = $DB->get_records('forum_discussions', array('forum' => $forum->id));
+    $modcontextidlookup = [];
 } else {
     $discussions = $DB->get_records('forum_discussions', array('course' => $course->id));
+    $modcontextidlookup = block_forum_report_getdiscussionmodcontextidlookup($course->id);
 }
 
 $discussionarray = '(';
@@ -206,27 +208,29 @@ foreach ($students as $student) {
      if($posts){
        foreach($posts as $pdata){
          $multimedia = get_mulutimedia_num($pdata->message);
-         if (!$multimedia) {
-            continue;
-         }
-         $multimedianum += $multimedia->num;
-         $imgnum += $multimedia->img;
-         $videonum += $multimedia->video;
-         $audionum += $multimedia->audio;
-         $linknum += $multimedia->link;
+         $attachment = block_forum_report_countattachmentmultimedia(
+            $forumid ? $modcontext->id : $modcontextidlookup[$pdata->discussion],
+            $pdata->id
+         );
+         $multimedianum += ($multimedia ? $multimedia->num : 0) + $attachment->num;
+         $imgnum += ($multimedia ? $multimedia->img : 0) + $attachment->img;
+         $videonum += ($multimedia ? $multimedia->video : 0) + $attachment->video;
+         $audionum += ($multimedia ? $multimedia->audio : 0) + $attachment->audio;
+         $linknum += ($multimedia ? $multimedia->link : 0) + $attachment->link;
        }
      }
      if($replies){
        foreach($replies as $reply){
          $multimedia = get_mulutimedia_num($reply->message);
-         if (!$multimedia) {
-            continue;
-         }
-         $multimedianum += $multimedia->num;
-         $imgnum += $multimedia->img;
-         $videonum += $multimedia->video;
-         $audionum += $multimedia->audio;
-         $linknum += $multimedia->link;
+         $attachment = block_forum_report_countattachmentmultimedia(
+            $forumid ? $modcontext->id : $modcontextidlookup[$reply->discussion],
+            $reply->id
+         );
+         $multimedianum += ($multimedia ? $multimedia->num : 0) + $attachment->num;
+         $imgnum += ($multimedia ? $multimedia->img : 0) + $attachment->img;
+         $videonum += ($multimedia ? $multimedia->video : 0) + $attachment->video;
+         $audionum += ($multimedia ? $multimedia->audio : 0) + $attachment->audio;
+         $linknum += ($multimedia ? $multimedia->link : 0) + $attachment->link;
        }
      }
     $studentdata[] = $multimedianum;

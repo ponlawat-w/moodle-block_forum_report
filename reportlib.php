@@ -144,6 +144,51 @@ function get_mulutimedia_num($text)
     return $count;
 }
 
+function block_forum_report_getdiscussionmodcontextidlookup($courseid) {
+    global $DB;
+    $forumlookup = [];
+    $forums = $DB->get_records('forum', ['course' => $courseid]);
+    foreach ($forums as $forum) {
+        $cm = get_coursemodule_from_id('forum', $forum->id, $courseid, false, MUST_EXIST);
+        $forumlookup[$forum->id] = context_module::instance($cm->id);
+    }
+    $results = [];
+    foreach ($forums as $forum) {
+        $discussions = $DB->get_records('forum_discussions', ['forum' => $forum->id]);
+        foreach ($discussions as $dicussion) {
+            $results[$dicussion->id] = $forumlookup[$forum->id]->id;
+        }
+    }
+    return $results;
+}
+
+function block_forum_report_countattachmentmultimedia($modcontextid, $postid) {
+    $count = new stdClass();
+    $count->num = 0;
+    $count->img = 0;
+    $count->video = 0;
+    $count->audio = 0;
+    $count->link = 0;
+
+    $fs = get_file_storage();
+    $files = $fs->get_area_files($modcontextid, 'mod_forum', 'attachment', $postid);
+    foreach ($files as $file) {
+        $mimetype = $file->get_mimetype();
+        if (substr($mimetype, 0, 6) == 'image/') {
+            $count->num++;
+            $count->img++;
+        } else if (substr($mimetype, 0, 6) == 'video/') {
+            $count->num++;
+            $count->video++;
+        } else if (substr($mimetype, 0, 6) == 'audio/') {
+            $count->num++;
+            $count->audio++;
+        }
+    }
+
+    return $count;
+}
+
 function block_forum_report_get_engagement($userid, $discussionarray) {
     global $DB;
     $posts = $DB->get_records_sql('SELECT * FROM {forum_posts} WHERE userid = ? AND discussion IN ' . $discussionarray . ' AND parent > 0 ORDER BY id', [$userid]);

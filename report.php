@@ -149,6 +149,7 @@ $struniqueactive = get_string('uniqueactive', 'block_forum_report');
 if (!$startnow) {
     echo '<br>';
 
+    $modcontextidlookup = $forumid ? [] : block_forum_report_getdiscussionmodcontextidlookup($course->id);
 
     $table = new flexible_table('forum_report_table');
     //$table->head = array($strname,$strcounrty,$strposts,$strreplies,$strwordcount,$strviews,$strfp,$strlp,$strsr,$strcl);
@@ -338,28 +339,30 @@ if (!$startnow) {
          if($posts){
            foreach($posts as $pdata){
              $multimedia = get_mulutimedia_num($pdata->message);
-             if (!$multimedia) {
-                continue;
-             }
-             $multimedianum += $multimedia->num;
-             $imgnum += $multimedia->img;
-             $videonum += $multimedia->video;
-             $audionum += $multimedia->audio;
-             $linknum += $multimedia->link;
+             $attachment = block_forum_report_countattachmentmultimedia(
+                $forumid ? $modcontext->id : $modcontextidlookup[$pdata->discussion],
+                $pdata->id
+             );
+             $multimedianum += ($multimedia ? $multimedia->num : 0) + $attachment->num;
+             $imgnum += ($multimedia ? $multimedia->img : 0) + $attachment->img;
+             $videonum += ($multimedia ? $multimedia->video : 0) + $attachment->video;
+             $audionum += ($multimedia ? $multimedia->audio : 0) + $attachment->audio;
+             $linknum += ($multimedia ? $multimedia->link : 0) + $attachment->link;
              //print_object($pdata->message);
            }
          }
          if($replies){
            foreach($replies as $reply){
              $multimedia = get_mulutimedia_num($reply->message);
-             if (!$multimedia) {
-                continue;
-             }
-             $multimedianum += $multimedia->num;
-             $imgnum += $multimedia->img;
-             $videonum += $multimedia->video;
-             $audionum += $multimedia->audio;
-             $linknum += $multimedia->link;
+             $attachment = block_forum_report_countattachmentmultimedia(
+                $forumid ? $modcontext->id : $modcontextidlookup[$reply->discussion],
+                $reply->id
+             );
+             $multimedianum += ($multimedia ? $multimedia->num : 0) + $attachment->num;
+             $imgnum += ($multimedia ? $multimedia->img : 0) + $attachment->img;
+             $videonum += ($multimedia ? $multimedia->video : 0) + $attachment->video;
+             $audionum += ($multimedia ? $multimedia->audio : 0) + $attachment->audio;
+             $linknum += ($multimedia ? $multimedia->link : 0) + $attachment->link;
 
            }
          }
