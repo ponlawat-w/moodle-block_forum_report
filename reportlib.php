@@ -151,7 +151,7 @@ function block_forum_report_getdiscussionmodcontextidlookup($courseid) {
     foreach ($forums as $forum) {
         $cm = get_coursemodule_from_instance('forum', $forum->id, $courseid, false, MUST_EXIST);
         $forumlookup[$forum->id] = context_module::instance($cm->id);
-    }s
+    }
     $results = [];
     foreach ($forums as $forum) {
         $discussions = $DB->get_records('forum_discussions', ['forum' => $forum->id]);
