@@ -1,4 +1,4 @@
-define(['jquery'], function () {
+define(['jquery'], function ($) {
     return {
         init: function () {
             $(document).ready(function () {
@@ -7,15 +7,18 @@ define(['jquery'], function () {
                     var forum = $('#id_forum').val();
                     var group = $('#id_group').val();
                     var grouping = $('#id_grouping').val();
-                    start = $('#id_starttime_enabled').is(":checked")
-                    end = $('#id_endtime_enabled').is(":checked");
+                    var start = $('#id_starttime_enabled').is(":checked");
+                    var end = $('#id_endtime_enabled').is(":checked");
                     if (start == true) {
                         var starttime_day = $('#id_starttime_day').val();
                         var starttime_month = $('#id_starttime_month').val();
                         var starttime_year = $('#id_starttime_year').val();
                         var starttime_hour = $('#id_starttime_hour').val();
                         var starttime_minute = $('#id_starttime_minute').val();
-                        var starttime = new Date(starttime_month + "-" + starttime_day + "-" + starttime_year + " " + starttime_hour + ":" + starttime_minute).getTime();
+                        var starttime = new Date(
+                            starttime_month + "-" + starttime_day + "-" + starttime_year
+                            + " " + starttime_hour + ":" + starttime_minute
+                        ).getTime();
                         starttime = starttime / 1000;
                     } else {
                         var starttime = "";
@@ -36,11 +39,13 @@ define(['jquery'], function () {
                     }
                     var courseid = $('#my_courseid').val();
                     var country = $('#id_country').val();
-                    window.location.replace('download.php?forum=' + forum + '&group=' + group + '&starttime=' + starttime +
-                        '&endtime=' + endtime + '&course=' + courseid + '&grouping=' + grouping + '&country=' + country);
-
+                    const engagementmethod = $('#id_engagementmethod').val();
+                    window.location.replace('download.php?forum=' + forum + '&group=' + group +
+                        '&starttime=' + starttime + '&endtime=' + endtime +
+                        '&course=' + courseid + '&grouping=' + grouping +
+                        '&country=' + country + '&engagementmethod=' + engagementmethod);
                 });
-            })
+            });
         }
-    }
-})
+    };
+});

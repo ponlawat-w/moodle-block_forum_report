@@ -3,6 +3,7 @@
 require_once(dirname(__FILE__) . '/../../config.php');
 require_once($CFG->libdir . '/tablelib.php');
 require_once('reportlib.php');
+require_once(__DIR__ . '/classes/engagement.php');
 
 $startnow = optional_param('startnow', 0, PARAM_INT);
 $forumid = optional_param('forum', 0, PARAM_INT);
@@ -12,6 +13,7 @@ $countryid = optional_param('country', '', PARAM_RAW);
 $start = optional_param('start', '', PARAM_RAW);
 $end = optional_param('end', '', PARAM_RAW);
 $perpage = optional_param('perpage', 0, PARAM_RAW);
+$engagementmethod = optional_param('engagementmethod', null, PARAM_INT);
 $page = optional_param('page', 0, PARAM_RAW);
 $tsort = optional_param('tsort', 0, PARAM_RAW);
 if (strpos($tsort, 'name') !== FALSE) {
@@ -103,7 +105,16 @@ if (isset($fromform->endtime)) {
 } else {
     $endtime = 0;
 }
-
+if (isset($fromform->engagementmethod)) {
+    $engagementmethod = $fromform->engagementmethod;
+    $params['engagementmethod'] = $engagementmethod;
+    $paramstr .= '&engagementmethod=' . $engagementmethod;
+} else if ($engagementmethod) {
+    $params['engagementmethod'] = $engagementmethod;
+    $paramstr .= '&engagementmethod=' . $engagementmethod;
+} else {
+    $engagementmethod = -1;
+}
 
 $PAGE->set_pagelayout('incourse');
 /// Output the page
@@ -197,8 +208,10 @@ if (!$startnow) {
     }
 
     $discussionarray = '(';
+    $engagementcalculators = [];
     foreach ($discussions as $discussion) {
         $discussionarray .= $discussion->id . ',';
+        $engagementcalculators[] = \block_forum_report\engagement::getinstancefrommethod($engagementmethod, $discussion->id, $starttime, $endtime);
     }
     $discussionarray .= '0)';
 
@@ -391,13 +404,16 @@ if (!$startnow) {
         //BL Customization
 
         // Engagement levels
-        $engagement = block_forum_report_get_engagement($student->id, $discussionarray);
-        $studentdata->el1 = $engagement->levels[0];
-        $studentdata->el2 = $engagement->levels[1];
-        $studentdata->el3 = $engagement->levels[2];
-        $studentdata->el4up = $engagement->levels[3];
-        $studentdata->elavg = $engagement->average;
-        $studentdata->elmax = $engagement->maximum;
+        $engagementresult = new \block_forum_report\engagementresult();
+        foreach ($engagementcalculators as $engagementcalculator) {
+            $engagementresult->add($engagementcalculator->calculate($student->id));
+        }
+        $studentdata->el1 = $engagementresult->getl1();
+        $studentdata->el2 = $engagementresult->getl2();
+        $studentdata->el3 = $engagementresult->getl3();
+        $studentdata->el4up = $engagementresult->getl4up();
+        $studentdata->elavg = $engagementresult->getaverage();
+        $studentdata->elmax = $engagementresult->getmax();
 
         //First post & Last post
         $firstpostsql = 'SELECT MIN(created) FROM {forum_posts} WHERE userid=' . $student->id . ' AND discussion IN ' . $discussionarray;

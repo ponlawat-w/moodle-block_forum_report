@@ -3,6 +3,7 @@
 require_once(dirname(__FILE__) . '/../../config.php');
 require_once('reportlib.php');
 require_once($CFG->libdir . '/csvlib.class.php');
+require_once(__DIR__ . '/classes/engagement.php');
 
 $forumid = optional_param('forum', 0, PARAM_INT);
 $courseid = required_param('course', PARAM_INT);
@@ -10,6 +11,7 @@ $countryfilter = optional_param('country', 0, PARAM_RAW);
 $groupfilter = optional_param('group', 0, PARAM_INT);
 $starttime = optional_param('starttime', '', PARAM_RAW);
 $endtime = optional_param('endtime', '', PARAM_RAW);
+$engagementmethod = required_param('engagementmethod', PARAM_INT);
 $course = $DB->get_record('course', array('id' => $courseid));
 require_course_login($course);
 $coursecontext = context_course::instance($course->id);
@@ -49,8 +51,10 @@ if ($forumid) {
 }
 
 $discussionarray = '(';
+$engagementcalculators = [];
 foreach ($discussions as $discussion) {
     $discussionarray .= $discussion->id . ',';
+    $engagementcalculators[] = \block_forum_report\engagement::getinstancefrommethod($engagementmethod, $discussion->id, $starttime, $endtime);
 }
 $discussionarray .= '0)';
 
@@ -240,13 +244,16 @@ foreach ($students as $student) {
     $studentdata[] = $linknum;
 
     // Engagement levels
-    $engagement = block_forum_report_get_engagement($student->id, $discussionarray);
-    $studentdata[] = $engagement->levels[0];
-    $studentdata[] = $engagement->levels[1];
-    $studentdata[] = $engagement->levels[2];
-    $studentdata[] = $engagement->levels[3];
-    $studentdata[] = $engagement->average;
-    $studentdata[] = $engagement->maximum;
+    $engagementresult = new \block_forum_report\engagementresult();
+    foreach ($engagementcalculators as $engagementcalculator) {
+        $engagementresult->add($engagementcalculator->calculate($student->id));
+    }
+    $studentdata[] = $engagementresult->getl1();
+    $studentdata[] = $engagementresult->getl2();
+    $studentdata[] = $engagementresult->getl3();
+    $studentdata[] = $engagementresult->getl4up();
+    $studentdata[] = $engagementresult->getaverage();
+    $studentdata[] = $engagementresult->getmax();
 
     //First post & Last post
     if ($posts || $replies) {
