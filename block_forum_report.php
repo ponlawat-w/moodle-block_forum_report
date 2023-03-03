@@ -22,7 +22,10 @@ defined('MOODLE_INTERNAL') || die();
 class block_forum_report extends block_base {
     function init() {
         $this->title = get_string('pluginname', 'block_forum_report');
-        
+    }
+
+    public function has_config() {
+        return true;
     }
 
     function applicable_formats() {
