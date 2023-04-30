@@ -416,10 +416,10 @@ if (!$startnow) {
         $studentdata->elmax = $engagementresult->getmax();
 
         //First post & Last post
-        $firstpostsql = 'SELECT MIN(created) FROM {forum_posts} WHERE userid=' . $student->id . ' AND discussion IN ' . $discussionarray;
+        $firstpostsql = 'SELECT MIN(created) mincreated FROM {forum_posts} WHERE userid=' . $student->id . ' AND discussion IN ' . $discussionarray;
         if ($posts || $replies) {
 
-            $firstpostsql = 'SELECT MIN(created) FROM {forum_posts} WHERE userid=' . $student->id . ' AND discussion IN ' . $discussionarray;
+            $firstpostsql = 'SELECT MIN(created) mincreated FROM {forum_posts} WHERE userid=' . $student->id . ' AND discussion IN ' . $discussionarray;
             if ($starttime) {
                 $firstpostsql = $firstpostsql . ' AND created>' . $starttime;
             }
@@ -427,12 +427,11 @@ if (!$startnow) {
                 $firstpostsql = $firstpostsql . ' AND created<' . $endtime;
             }
             $firstpost = $DB->get_record_sql($firstpostsql);
-            $minstr = 'min(created)'; //
-            $firstpostdate = userdate($firstpost->$minstr);
+            $firstpostdate = userdate($firstpost->mincreated);
             $studentdata->firstpost = $firstpostdate;
 
 
-            $lastpostsql = 'SELECT MAX(created) FROM {forum_posts} WHERE userid=' . $student->id . ' AND discussion IN ' . $discussionarray;
+            $lastpostsql = 'SELECT MAX(created) maxcreated FROM {forum_posts} WHERE userid=' . $student->id . ' AND discussion IN ' . $discussionarray;
             if ($starttime) {
                 $lastpostsql = $lastpostsql . ' AND created>' . $starttime;
             }
@@ -440,8 +439,7 @@ if (!$startnow) {
                 $lastpostsql = $lastpostsql . ' AND created<' . $endtime;
             }
             $lastpost = $DB->get_record_sql($lastpostsql);
-            $maxstr = 'max(created)'; //
-            $lastpostdate = userdate($lastpost->$maxstr);
+            $lastpostdate = userdate($lastpost->maxcreated);
             $studentdata->lastpost = $lastpostdate;
         } else {
             $studentdata->firstpost = '-';

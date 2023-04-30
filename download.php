@@ -77,7 +77,7 @@ foreach ($students as $student) {
     }
 
     //Username
-    $studentdata[] = $student->username;
+    // $studentdata[] = $student->username; // temporarily removed
     //Name
     $studentdata[] = $student->firstname;
     $studentdata[] = $student->lastname;
@@ -257,7 +257,7 @@ foreach ($students as $student) {
 
     //First post & Last post
     if ($posts || $replies) {
-        $firstpostsql = 'SELECT MIN(created) FROM {forum_posts} WHERE userid=' . $student->id . ' AND discussion IN ' . $discussionarray;
+        $firstpostsql = 'SELECT MIN(created) mincreated FROM {forum_posts} WHERE userid=' . $student->id . ' AND discussion IN ' . $discussionarray;
         if ($starttime) {
             $firstpostsql = $firstpostsql . ' AND created>' . $starttime;
         }
@@ -265,11 +265,10 @@ foreach ($students as $student) {
             $firstpostsql = $firstpostsql . ' AND created<' . $endtime;
         }
         $firstpost = $DB->get_record_sql($firstpostsql);
-        $minstr = 'min(created)'; //
-        $firstpostdate = userdate($firstpost->$minstr);
+        $firstpostdate = userdate($firstpost->mincreated);
         $studentdata[] = $firstpostdate;
 
-        $lastpostsql = 'SELECT MAX(created) FROM {forum_posts} WHERE userid=' . $student->id . ' AND discussion IN ' . $discussionarray;
+        $lastpostsql = 'SELECT MAX(created) maxcreated FROM {forum_posts} WHERE userid=' . $student->id . ' AND discussion IN ' . $discussionarray;
         if ($starttime) {
             $lastpostsql = $lastpostsql . ' AND created>' . $starttime;
         }
@@ -277,8 +276,7 @@ foreach ($students as $student) {
             $lastpostsql = $lastpostsql . ' AND created<' . $endtime;
         }
         $lastpost = $DB->get_record_sql($lastpostsql);
-        $maxstr = 'max(created)'; //
-        $lastpostdate = userdate($lastpost->$maxstr);
+        $lastpostdate = userdate($lastpost->maxcreated);
         $studentdata[] = $lastpostdate;
     } else {
         $studentdata[] = '-';
@@ -291,7 +289,7 @@ $csvexport = new \csv_export_writer();
 $filename = 'forum-report';
 $csvexport->set_filename($filename);
 $csvexport->add_data(array(
-    'Username', 'First Name', 'Last Name', 'Group', 'Country', 'Instituion',
+    /*'Username', (temporarily removed) */'First Name', 'Last Name', 'Group', 'Country', 'Instituion',
     'Posts', 'Replies', 'Unique days active', 'Views', 'Unique days viewed',
     'Word count', 'Multimedia', 'Images', 'Videos', 'Audios', 'Links',
     'Engagement#1', 'Engagement#2', 'Engagement#3', 'Engagement#4', 'Average Engagement', 'Maximum Engagement',

@@ -39,20 +39,8 @@ class block_forum_report extends block_base {
     function get_content() {
         global $CFG, $DB, $OUTPUT, $USER,$COURSE;
         $context = $this->page->context;
-        if($this->page->theme->name == "boost" && (has_capability('block/forum_report:view', $context))){
-            $params['course'] = $COURSE->id;
-            $params['startnow'] = 1;
-            $url = new moodle_url('/blocks/forum_report/report.php',$params);
-            $addflat = navigation_node::create(get_string('pluginname', 'block_forum_report'), $url);
-            $flat = new flat_navigation_node($addflat, 0);
-            $flat->set_showdivider(true, get_string('pluginname', 'block_forum_report'));
-            $flat->key = 'forumreport';
-            $flat->type = 0;
-            if($this->page->flatnav->find($flat->key)) return;
-            if($this->page->flatnav->add($flat)){
-                return NULL;
-            }
-        }
+        
+        // Removed flat navigation as it is deprecated since Moodle 4
         
         if($this->content !== NULL) {
             return $this->content;
