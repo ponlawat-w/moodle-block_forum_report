@@ -60,6 +60,8 @@ $discussionarray .= '0)';
 
 $data = array();
 
+$reactforuminstalled = block_forum_report_reactforuminstalled();
+
 foreach ($students as $student) {
     $studentdata = array();
 
@@ -282,6 +284,10 @@ foreach ($students as $student) {
         $studentdata[] = '-';
         $studentdata[] = '-';
     }
+
+    $studentdata[] = block_forum_report_getreactionsgiven($student->id, $discussionarray, $starttime, $endtime);
+    $studentdata[] = block_forum_report_getreactionsreceived($student->id, $discussionarray, $starttime, $endtime);
+
     $data[] = $studentdata;
 }
 
@@ -293,7 +299,7 @@ $csvexport->add_data(array(
     'Posts', 'Replies', 'Unique days active', 'Views', 'Unique days viewed',
     'Word count', 'Multimedia', 'Images', 'Videos', 'Audios', 'Links',
     'Engagement#1', 'Engagement#2', 'Engagement#3', 'Engagement#4', 'Average Engagement', 'Maximum Engagement',
-    'First post', 'Last post'
+    'First post', 'Last post', 'Reactions Given', 'Reactions Received'
 ));
 foreach ($data as $line) {
     $csvexport->add_data($line);

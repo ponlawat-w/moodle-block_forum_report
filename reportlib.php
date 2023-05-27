@@ -193,3 +193,43 @@ function block_forum_report_countattachmentmultimedia($modcontextid, $postid) {
 
     return $count;
 }
+
+function block_forum_report_reactforuminstalled() {
+    $pluginmanager = core_plugin_manager::instance();
+    return isset($pluginmanager->get_installed_plugins('local')['reactforum']);
+}
+
+function block_forum_report_getreactionsgiven($userid, $discussionarray, $starttime, $endtime) {
+    /**
+     * @var \moodle_database $DB
+     */
+    global $DB;
+    $sql = 'SELECT id FROM {forum_posts} WHERE discussion IN ' . $discussionarray;
+    if ($starttime) {
+        $sql .= ' AND created > ' . $starttime;
+    }
+    if ($endtime) {
+        $sql .= ' AND created < ' . $endtime;
+    }
+    $postids = array_map(function($post) { return $post->id; }, $DB->get_records_sql($sql));
+    list($postidssql, $postidsparams) = $DB->get_in_or_equal($postids);
+    $params = array_merge([$userid], $postidsparams);
+    return $DB->get_record_sql('SELECT COUNT(*) reactionsgiven FROM {reactforum_reacted} WHERE userid = ? AND post ' . $postidssql, $params)->reactionsgiven;
+}
+
+function block_forum_report_getreactionsreceived($userid, $discussionarray, $starttime, $endtime) {
+    /**
+     * @var \moodle_database $DB
+     */
+    global $DB;
+    $sql = 'SELECT id FROM {forum_posts} WHERE userid = ? AND discussion IN ' . $discussionarray;
+    if ($starttime) {
+        $sql .= ' AND created > ' . $starttime;
+    }
+    if ($endtime) {
+        $sql .= ' AND created < ' . $endtime;
+    }
+    $postids = array_map(function($post) { return $post->id; }, $DB->get_records_sql($sql, [$userid]));
+    list($postidssql, $postidsparams) = $DB->get_in_or_equal($postids);
+    return $DB->get_record_sql('SELECT COUNT(*) reactionsreceived FROM {reactforum_reacted} WHERE post ' . $postidssql, $postidsparams)->reactionsreceived;
+}

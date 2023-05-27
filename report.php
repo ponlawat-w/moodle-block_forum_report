@@ -129,6 +129,8 @@ echo $OUTPUT->header();
 $mform->display();
 echo html_writer::tag('input','',array('type'=>'hidden','id'=>'my_courseid','value'=>$courseid));
 
+$reactforuminstalled = block_forum_report_reactforuminstalled();
+
 $strname = get_string('fullname');
 $strfirstname = get_string('firstname');
 $strlastname = get_string('lastname');
@@ -156,6 +158,8 @@ $strgroup = get_string('group');
 $strmultimedia = get_string('multimedia', 'block_forum_report');
 $struniqueview = get_string('uniqueview', 'block_forum_report');
 $struniqueactive = get_string('uniqueactive', 'block_forum_report');
+$strreactionsgiven = get_string('reactionsgiven', 'block_forum_report');
+$strreactionsreceived = get_string('reactionsreceived', 'block_forum_report');
 
 if (!$startnow) {
     echo '<br>';
@@ -166,19 +170,35 @@ if (!$startnow) {
     //$table->head = array($strname,$strcounrty,$strposts,$strreplies,$strwordcount,$strviews,$strfp,$strlp,$strsr,$strcl);
     //$table->define_align = array ("center","center","center","center","center","center","center","center","center","center");
     $table->define_baseurl($PAGE->url);
-    $table->define_columns(array(
+
+    $columns = [
         'firstname', 'lastname', 'group', 'country', 'institution',
         'posts', 'replies', 'unique_activedays', 'views', 'uniqueviewdays',
         'wordcount', 'multimedia', 'multimedia_image', 'multimedia_video', 'multimedia_audio', 'multimedia_link',
         'el1', 'el2', 'el3', 'el4up', 'elavg', 'elmax',
-        'firstpost', 'lastpost', 'action'
-    ));
-    $table->define_headers(array(
+        'firstpost', 'lastpost'
+    ];
+    if ($reactforuminstalled) {
+        $columns[] = 'reactionsgiven';
+        $columns[] = 'reactionsreceived';
+    }
+    $columns[] = 'action';
+    $table->define_columns($columns);
+
+    $headers = [
         $strfirstname, $strlastname, $strgroup, $strcounrty, $strinstituion,
         $strposts, $strreplies, $struniqueactive, $strviews, $struniqueview,
         $strwordcount, $strmultimedia, $strimage, $strvideo, $straudio, $strlink,
         $strel1,$strel2,$strel3,$strel4up,$strelavg,$strelmax,
-        $strfp, $strlp, ''));
+        $strfp, $strlp
+    ];
+    if ($reactforuminstalled) {
+        $headers[] = $strreactionsgiven;
+        $headers[] = $strreactionsreceived;
+    }
+    $headers[] = '';
+    $table->define_headers($headers);
+
     $table->sortable(true);
     $table->collapsible(true);
     $table->set_attribute('class', 'admintable generaltable');
@@ -445,6 +465,12 @@ if (!$startnow) {
             $studentdata->firstpost = '-';
             $studentdata->lastpost = '-';
         }
+
+        if ($reactforuminstalled) {
+            $studentdata->reactionsgiven = block_forum_report_getreactionsgiven($student->id, $discussionarray, $starttime, $endtime);
+            $studentdata->reactionsreceived = block_forum_report_getreactionsreceived($student->id, $discussionarray, $starttime, $endtime);
+        }
+
         $data[] = $studentdata;
     }
     if ($sortby && !$orderbyname) {
@@ -466,12 +492,17 @@ if (!$startnow) {
         $compurl = $CFG->wwwroot . '/report/outline/user.php?id=' . $row->id . '&course=' . $course->id . '&mode=complete';
         $complink = '<a href="' . $compurl . '"><span class="forumreporticon-profile" title="Complete reports"></span></a>';
         //$table->data[] = array($row->name,$row->country,$row->posts,$row->replies,$row->wordcount,$row->views,$row->firstpost,$row->lastpost,$sendreminder,$complink);
-        $trdata = array(
+        $trdata = [
             $row->firstname, $row->lastname, $row->group, $row->country, $row->institution,
             $row->posts, $row->replies, $row->unique_activedays, $row->views, $row->uniqueviewdays,
             $row->wordcount, $row->multimedia, $row->multimedia_image, $row->multimedia_video, $row->multimedia_audio, $row->multimedia_link,
             $row->el1, $row->el2, $row->el3, $row->el4up, $row->elavg, $row->elmax,
-            $row->firstpost, $row->lastpost, $sendreminder . $complink);
+            $row->firstpost, $row->lastpost];
+        if ($reactforuminstalled) {
+            $trdata[] = $row->reactionsgiven;
+            $trdata[] = $row->reactionsreceived;
+        }
+        $trdata[] = $sendreminder . $complink;
         $table->add_data($trdata);
     }
     echo '<input type="hidden" name="course" id="courseid" value="' . $courseid . '">';
