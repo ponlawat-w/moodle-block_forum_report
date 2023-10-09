@@ -212,6 +212,9 @@ function block_forum_report_getreactionsgiven($userid, $discussionarray, $startt
         $sql .= ' AND created < ' . $endtime;
     }
     $postids = array_map(function($post) { return $post->id; }, $DB->get_records_sql($sql));
+    if (!count($postids)) {
+        return 0;
+    }
     list($postidssql, $postidsparams) = $DB->get_in_or_equal($postids);
     $params = array_merge([$userid], $postidsparams);
     return $DB->get_record_sql('SELECT COUNT(*) reactionsgiven FROM {reactforum_reacted} WHERE userid = ? AND post ' . $postidssql, $params)->reactionsgiven;
@@ -230,6 +233,9 @@ function block_forum_report_getreactionsreceived($userid, $discussionarray, $sta
         $sql .= ' AND created < ' . $endtime;
     }
     $postids = array_map(function($post) { return $post->id; }, $DB->get_records_sql($sql, [$userid]));
+    if (!count($postids)) {
+        return 0;
+    }
     list($postidssql, $postidsparams) = $DB->get_in_or_equal($postids);
     return $DB->get_record_sql('SELECT COUNT(*) reactionsreceived FROM {reactforum_reacted} WHERE post ' . $postidssql, $postidsparams)->reactionsreceived;
 }
