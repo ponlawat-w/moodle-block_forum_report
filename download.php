@@ -140,33 +140,39 @@ foreach ($students as $student) {
     }
     //BL Customization
     //View
-    $logtable = 'logstore_standard_log';
-    $eventname = '\\\\mod_forum\\\\event\\\\discussion_viewed';
+    /** @var \moodle_database $DB */
+    $viewsconditions = [
+        'eventname = ?',
+        'userid = ?'
+    ];
+    $viewsparams = [
+        '\\mod_forum\\event\\discussion_viewed',
+        $student->id
+    ];
+
     if ($forumid) {
-        $viewsql = "SELECT * FROM {logstore_standard_log} WHERE userid=$student->id AND contextinstanceid=$cm->id AND contextlevel=" . CONTEXT_MODULE . " AND eventname='$eventname'";
+        $viewsconditions[] = 'contextinstanceid = ?';
+        $viewsparams[] = $cm->id;
+        $viewsconditions[] = 'contextlevel = ?';
+        $viewsparams[] = CONTEXT_MODULE;
     } else {
-        $views = $DB->get_records($logtable, array('userid' => $student->id, 'courseid' => $courseid, 'eventname' => $eventname));
-        $viewsql = "SELECT * FROM {logstore_standard_log} WHERE userid=$student->id AND courseid=$courseid AND eventname='$eventname'";
+        $viewsconditions[] = 'courseid = ?';
+        $viewsparams[] = $courseid;
     }
     if ($starttime) {
-        $viewsql = $viewsql . ' AND timecreated>' . $starttime;
+        $viewsconditions[] = 'timecreated > ?';
+        $viewsparams[] = $starttime;
     }
     if ($endtime) {
-        $viewsql = $viewsql . ' AND timecreated<' . $endtime;
+        $viewsconditions[] = 'timecreated < ?';
+        $viewsparams[] = $endtime;
     }
-    $views = $DB->get_records_sql($viewsql);
-    $studentdata[] = count($views);
-    //BL Customization
-    //Unique View days
-    $uviewdaysnum = array();
-    foreach ($views as $view1) {
-        $uviewdaysnum[] = get_midnight($view1->timecreated);
-    }
-    if ($views) {
-        $studentdata[] = count(array_unique($uviewdaysnum));
-    } else {
-        $studentdata[] = "0";
-    }
+
+    $views = $DB->get_record_sql('SELECT COUNT(*) viewscount FROM {logstore_standard_log} WHERE ' . implode(' AND ', $viewsconditions), $viewsparams);
+    $studentdata[] = $views ? $views->viewscount : 0;
+
+    $uniqueviewdays = $DB->get_record_sql('SELECT COUNT(DISTINCT (timecreated - (timecreated % 86400))) uniqueviewdayscount FROM {logstore_standard_log} WHERE ' . implode(' AND ', $viewsconditions), $viewsparams);
+    $studentdata[] = $uniqueviewdays ? $uniqueviewdays->uniqueviewdayscount : 0;
     //BL Customization
     //Word count
     if ($posts || $replies) {
