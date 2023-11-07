@@ -1,8 +1,8 @@
 <?php
 
-require_once(dirname(__FILE__) . '/../../config.php');
-require_once('reportlib.php');
-require_once($CFG->libdir . '/csvlib.class.php');
+require_once(__DIR__ . '/../../config.php');
+require_once(__DIR__ . '/../../lib/csvlib.class.php');
+require_once(__DIR__ . '/reportlib.php');
 require_once(__DIR__ . '/classes/engagement.php');
 
 $forumid = optional_param('forum', 0, PARAM_INT);
@@ -22,6 +22,7 @@ if ($forumid) {
     $modcontext = context_module::instance($cm->id);
 }
 require_capability('block/forum_report:view', $coursecontext, NULL, true, 'noviewdiscussionspermission', 'forum');
+block_forum_report_checkpermission($courseid, $groupfilter);
 
 $students = get_users_by_capability($coursecontext, 'mod/forum:viewdiscussion');
 

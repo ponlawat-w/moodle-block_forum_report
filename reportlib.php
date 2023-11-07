@@ -1,13 +1,28 @@
 <?php
 
-require_once("$CFG->libdir/formslib.php");
+require_once(__DIR__ . '/../../lib/formslib.php');
 require_once(__DIR__ . '/classes/engagement.php');
 
 class report_form extends moodleform
 {
+    private int $courseid;
+    private \core\context\block $contextblock;
+
+    public function __construct($courseid)
+    {
+        /** @var \moodle_database $DB */
+        global $DB;
+        $this->courseid = $courseid;
+        $contextcourse = \core\context\course::instance($this->courseid);
+        $block = $DB->get_record('block_instances', ['blockname' => 'forum_report', 'parentcontextid' => $contextcourse->id], '*', MUST_EXIST);
+        $this->contextblock = \core\context\block::instance($block->id);
+        parent::__construct();
+    }
+
     //Add elements to form
     public function definition()
     {
+        /** @var \moodle_database $DB; */
         global $CFG, $DB, $COURSE;
         $perpage = optional_param('perpage', 0, PARAM_RAW);
         $countryid = optional_param('country', '', PARAM_RAW);
@@ -26,15 +41,27 @@ class report_form extends moodleform
         $forums = array('0' => get_string('all')) + $forums;
         $select_forum = $mform->addElement('select', 'forum', get_string('forum', 'forum'), $forums);
         $select_forum->setSelected("$forumid");
-        $allgroups = groups_get_all_groups($COURSE->id);
-        if (count($allgroups)) {
-            $groupoptions = array('0' => get_string('allgroups'));
-            foreach ($allgroups as $group) {
-                $groupoptions[$group->id] = $group->name;
+
+        $groupoptions = [];
+        if (has_capability('block/forum_report:viewothergroups', $this->contextblock)) {
+            $allgroups = groups_get_all_groups($COURSE->id);
+            if (count($allgroups)) {
+                $groupoptions = array('0' => get_string('allgroups'));
+                foreach ($allgroups as $group) {
+                    $groupoptions[$group->id] = $group->name;
+                }
             }
-            $select_group = $mform->addElement('select', 'group', get_string('group'), $groupoptions);
-            $select_group->setSelected("$groupid");
+        } else {
+            $mygroups = groups_get_user_groups($this->courseid);
+            foreach ($mygroups[0] as $mygroupid) {
+                if (!$groupid) {
+                    $groupid = $mygroupid;
+                }
+                $groupoptions[$mygroupid] = groups_get_group_name($mygroupid);
+            }
         }
+        $select_group = $mform->addElement('select', 'group', get_string('group'), $groupoptions);
+        $select_group->setSelected($groupid);
 
         $countries = get_string_manager()->get_list_of_countries();
 
@@ -147,6 +174,25 @@ function get_mulutimedia_num($text)
         }
     }
     return $count;
+}
+
+function block_forum_report_checkpermission($courseid, $groupid) {
+    global $DB;
+    $contextcourse = \core\context\course::instance($courseid);
+    $block = $DB->get_record('block_instances', ['blockname' => 'forum_report', 'parentcontextid' => $contextcourse->id], '*', MUST_EXIST);
+    $contextblock = \core\context\block::instance($block->id);
+    require_capability('block/forum_report:view', $contextblock, null, true, 'noviewdiscussionpermission', 'forum');
+
+    if (!$groupid) {
+        require_capability('block/forum_report:viewothergroups', $contextblock);
+    }
+
+    $groups = groups_get_user_groups($courseid);
+    if (in_array($groupid, $groups[0])) {
+        return;
+    }
+
+    require_capability('block/forum_report:viewothergroups', $contextblock);
 }
 
 function block_forum_report_getdiscussionmodcontextidlookup($courseid) {

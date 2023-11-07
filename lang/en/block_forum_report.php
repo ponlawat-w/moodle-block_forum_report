@@ -60,6 +60,7 @@ $string['sentreminder'] = 'Sent a reminder.';
 $string['forum_report:sendreminder'] = 'Send reminder';
 $string['forum_report:addinstance'] = 'Add a new forum report block';
 $string['forum_report:view'] = 'View forum report';
+$string['forum_report:viewothergroups'] = 'View forum report of users from other groups';
 
 $string['engagement_method'] = 'Engagement Method';
 $string['engagement_method_help'] = '<p>Engagement Calculation Method</p><strong>Person-to-Person Engagement:</strong> The engagement level increases each time a user replies to the same user in the same thread.<br><strong>Thread Total Count Engagement:</strong> The engagement level increases each time a user participate in the same thread.<br><strong>Thread Engagement:</strong> The engagement level increases each time a user participates in a reply where they already participated in the parent posts.';

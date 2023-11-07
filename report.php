@@ -1,8 +1,8 @@
 <?php
 
-require_once(dirname(__FILE__) . '/../../config.php');
-require_once($CFG->libdir . '/tablelib.php');
-require_once('reportlib.php');
+require_once(__DIR__ . '/../../config.php');
+require_once(__DIR__ . '/../../lib/tablelib.php');
+require_once(__DIR__ . '/reportlib.php');
 require_once(__DIR__ . '/classes/engagement.php');
 
 $startnow = optional_param('startnow', 0, PARAM_INT);
@@ -29,7 +29,6 @@ $coursecontext = context_course::instance($course->id);
 
 require_capability('block/forum_report:view', $coursecontext, NULL, true, 'noviewdiscussionspermission', 'forum');
 
-
 if ($forumid) {
     $params['forum'] = $forumid;
     $forum = $DB->get_record('forum', array('id' => $forumid));
@@ -41,7 +40,7 @@ if ($forumid) {
 
 $countries = get_string_manager()->get_list_of_countries();
 
-$mform = new report_form();
+$mform = new report_form($courseid);
 $fromform = $mform->get_data();
 $paramstr = '?course=' . $course->id . '&forum=' . $forumid;
 
@@ -162,6 +161,8 @@ $strreactionsgiven = get_string('reactionsgiven', 'block_forum_report');
 $strreactionsreceived = get_string('reactionsreceived', 'block_forum_report');
 
 if (!$startnow) {
+    block_forum_report_checkpermission($courseid, $groupid);
+
     echo '<br>';
 
     $modcontextidlookup = $forumid ? [] : block_forum_report_getdiscussionmodcontextidlookup($course->id);
