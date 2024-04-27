@@ -14,6 +14,7 @@ $start = optional_param('start', '', PARAM_RAW);
 $end = optional_param('end', '', PARAM_RAW);
 $perpage = optional_param('perpage', 0, PARAM_RAW);
 $engagementmethod = optional_param('engagementmethod', null, PARAM_INT);
+$engagementinternational = optional_param('engagementinternational', false, PARAM_BOOL);
 $page = optional_param('page', 0, PARAM_RAW);
 $tsort = optional_param('tsort', 0, PARAM_RAW);
 if (strpos($tsort, 'name') !== FALSE) {
@@ -113,6 +114,15 @@ if (isset($fromform->engagementmethod)) {
     $paramstr .= '&engagementmethod=' . $engagementmethod;
 } else {
     $engagementmethod = -1;
+}
+
+if (isset($fromform->engagementinternational)) {
+    $engagementinternational = $fromform->engagementinternational;
+    $params['engagementinternational'] = $engagementinternational;
+    $paramstr .= '&engagementinternational=' . ($engagementinternational ? 1 : 0);
+} else if ($engagementinternational) {
+    $params['engagementinternational'] = $engagementinternational;
+    $paramstr .= '&engagementinternational=' . ($engagementinternational ? 1 : 0);
 }
 
 $PAGE->set_pagelayout('incourse');
@@ -232,7 +242,7 @@ if (!$startnow) {
     $engagementcalculators = [];
     foreach ($discussions as $discussion) {
         $discussionarray .= $discussion->id . ',';
-        $engagementcalculators[] = \block_forum_report\engagement::getinstancefrommethod($engagementmethod, $discussion->id, $starttime, $endtime);
+        $engagementcalculators[] = \block_forum_report\engagement::getinstancefrommethod($engagementmethod, $discussion->id, $starttime, $endtime, $engagementinternational);
     }
     $discussionarray .= '0)';
 

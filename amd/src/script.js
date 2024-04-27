@@ -40,10 +40,12 @@ define(['jquery'], function ($) {
                     var courseid = $('#my_courseid').val();
                     var country = $('#id_country').val();
                     const engagementmethod = $('#id_engagementmethod').val();
+                    const engagementinternational = $('#id_engagementinternational').prop('checked');
                     window.location.replace('download.php?forum=' + forum + '&group=' + group +
                         '&starttime=' + starttime + '&endtime=' + endtime +
                         '&course=' + courseid + '&grouping=' + grouping +
-                        '&country=' + country + '&engagementmethod=' + engagementmethod);
+                        '&country=' + country + '&engagementmethod=' + engagementmethod +
+                        '&engagementinternational=' + (engagementinternational ? 1 : 0));
                 });
             });
         }

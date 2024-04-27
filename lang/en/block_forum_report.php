@@ -62,7 +62,7 @@ $string['forum_report:addinstance'] = 'Add a new forum report block';
 $string['forum_report:view'] = 'View forum report';
 $string['forum_report:viewothergroups'] = 'View forum report of users from other groups';
 
-$string['engagement_method'] = 'Engagement Method';
+$string['engagement_method'] = 'Engagement method';
 $string['engagement_method_help'] = '<p>Engagement Calculation Method</p><strong>Person-to-Person Engagement:</strong> The engagement level increases each time a user replies to the same user in the same thread.<br><strong>Thread Total Count Engagement:</strong> The engagement level increases each time a user participate in the same thread.<br><strong>Thread Engagement:</strong> The engagement level increases each time a user participates in a reply where they already participated in the parent posts.';
 $string['engagement_persontoperson'] = 'Person-to-Person Engagement';
 $string['engagement_persontoperson_description'] = 'The engagement level increases each time a user replies to the same user in the same thread.';
@@ -72,6 +72,8 @@ $string['engagement_threadengagement'] = 'Thread Engagement';
 $string['engagement_threadengagement_description'] = 'The engagement level increases each time a user participates in a reply where they already participated in the parent posts.';
 
 $string['engagement_admin_defaultmethod'] = 'Default Engagement Calculation Method';
+
+$string['engagement_international'] = 'International engagement only';
 
 $string['reactionsreceived'] = 'Reactions Received';
 $string['reactionsgiven'] = 'Reactions Given';

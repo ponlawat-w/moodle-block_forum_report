@@ -12,6 +12,7 @@ $groupfilter = optional_param('group', 0, PARAM_INT);
 $starttime = optional_param('starttime', '', PARAM_RAW);
 $endtime = optional_param('endtime', '', PARAM_RAW);
 $engagementmethod = required_param('engagementmethod', PARAM_INT);
+$engagementinternational = required_param('engagementinternational', PARAM_INT) ? true : false;
 $course = $DB->get_record('course', array('id' => $courseid));
 require_course_login($course);
 $coursecontext = context_course::instance($course->id);
@@ -55,7 +56,7 @@ $discussionarray = '(';
 $engagementcalculators = [];
 foreach ($discussions as $discussion) {
     $discussionarray .= $discussion->id . ',';
-    $engagementcalculators[] = \block_forum_report\engagement::getinstancefrommethod($engagementmethod, $discussion->id, $starttime, $endtime);
+    $engagementcalculators[] = \block_forum_report\engagement::getinstancefrommethod($engagementmethod, $discussion->id, $starttime, $endtime, $engagementinternational);
 }
 $discussionarray .= '0)';
 
