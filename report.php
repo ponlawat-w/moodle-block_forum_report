@@ -26,7 +26,7 @@ $params['course'] = $courseid;
 $course = $DB->get_record('course', array('id' => $courseid));
 
 require_course_login($course);
-$coursecontext = context_course::instance($course->id);
+$coursecontext = \core\context\course::instance($course->id);
 
 require_capability('block/forum_report:view', $coursecontext, NULL, true, 'noviewdiscussionspermission', 'forum');
 
@@ -34,7 +34,7 @@ if ($forumid) {
     $params['forum'] = $forumid;
     $forum = $DB->get_record('forum', array('id' => $forumid));
     $cm = get_coursemodule_from_instance('forum', $forum->id, $course->id, false, MUST_EXIST);
-    $modcontext = context_module::instance($cm->id);
+    $modcontext = \core\context\module::instance($cm->id);
     $PAGE->set_title("$course->shortname: $forum->name");
     $PAGE->navbar->add($forum->name);
 }
@@ -175,7 +175,7 @@ if (!$startnow) {
 
     echo '<br>';
 
-    $modcontextidlookup = $forumid ? [] : block_forum_report_getdiscussionmodcontextidlookup($course->id);
+    $modcontextidlookup = block_forum_report_getdiscussionmodcontextidlookup($course->id);
 
     $table = new flexible_table('forum_report_table');
     //$table->head = array($strname,$strcounrty,$strposts,$strreplies,$strwordcount,$strviews,$strfp,$strlp,$strsr,$strcl);
@@ -230,51 +230,36 @@ if (!$startnow) {
     //get_enrolled_users(context $context, $withcapability = '', $groupid = 0, $userfields = 'u.*', $orderby = '', $limitfrom = 0, $limitnum = 0)に変えること
     //$students = get_enrolled_users($coursecontext);
     //var_dump($students);
-    if ($forumid) {
-        $students = get_users_by_capability($modcontext, 'mod/forum:viewdiscussion', '', $orderbyname);
-        $discussions = $DB->get_records('forum_discussions', array('forum' => $forum->id));
-    } else {
-        $students = get_users_by_capability($coursecontext, 'mod/forum:viewdiscussion', '', $orderbyname);
-        $discussions = $DB->get_records('forum_discussions', array('course' => $course->id));
-    }
 
-    $discussionarray = '(';
     $engagementcalculators = [];
+    /** @var \moodle_database $DB */
+    $discussions = $DB->get_records('forum_discussions', $forumid ? ['forum' => $forumid] : ['course' => $courseid], '', 'id');
     foreach ($discussions as $discussion) {
-        $discussionarray .= $discussion->id . ',';
         $engagementcalculators[] = \block_forum_report\engagement::getinstancefrommethod($engagementmethod, $discussion->id, $starttime, $endtime, $engagementinternational);
     }
-    $discussionarray .= '0)';
 
     $data = array();
 
+    $students = block_forum_report_getbasicreports(
+        $forumid ? $modcontext : $coursecontext,
+        $courseid,
+        $forumid,
+        $groupid,
+        $countryfilter,
+        $starttime,
+        $endtime
+    );
+
     foreach ($students as $student) {
         $studentdata = new stdClass();
-
-        if ($countryfilter && $countryfilter != $student->country) {
-            continue;
-        }
-
-        //Group
-        $studentgroups = groups_get_all_groups($course->id, $student->id);
-        $tempgroups = array();
-        $studentdata->group = "";
-        foreach ($studentgroups as $studentgroup) {
-            $tempgroups[] = $studentgroup->name;
-        }
-        if ($tempgroups) $studentdata->group = implode(',', $tempgroups);
-        $ingroups = array_keys($studentgroups);
-        if ($groupfilter) {
-            if (!in_array($groupfilter, $ingroups)) {
-                continue;
-            }
-        }
 
         $studentdata->id = $student->id;
 
         //Name
         $studentdata->firstname = $student->firstname;
         $studentdata->lastname = $student->lastname;
+
+        $studentdata->group = $student->groupnames;
 
         //Countryfullname($student);
         $studentdata->country = @$countries[$student->country];
@@ -283,164 +268,30 @@ if (!$startnow) {
         $studentdata->institution = $student->institution;
 
         //Posts
-        $postsql = 'SELECT * FROM {forum_posts} WHERE userid=' . $student->id . ' AND discussion IN ' . $discussionarray . ' AND parent=0';
-        if ($starttime) {
-            $postsql = $postsql . ' AND created>' . $starttime;
-        }
-        if ($endtime) {
-            $postsql = $postsql . ' AND created<' . $endtime;
-        }
+        $studentdata->posts = $student->posts;
+        $studentdata->replies = $student->replies;
 
-        $posts = $DB->get_records_sql($postsql);
-        $studentdata->posts = count($posts);
-
-        //Replies
-        $repsql = 'SELECT * FROM {forum_posts} WHERE userid=' . $student->id . ' AND discussion IN ' . $discussionarray . ' AND parent>0';
-        if ($starttime) {
-            $repsql = $repsql . ' AND created>' . $starttime;
-        }
-        if ($endtime) {
-            $repsql = $repsql . ' AND created<' . $endtime;
-        }
-        $replies = $DB->get_records_sql($repsql);
-        $studentdata->replies = count($replies);
         //BL Customization
         //Unique active days
-        $postreplysql = 'SELECT * FROM {forum_posts} WHERE userid=' . $student->id . ' AND discussion IN ' . $discussionarray;
-        if ($starttime) {
-            $postreplysql = $postreplysql . ' AND created>' . $starttime;
-        }
-        if ($endtime) {
-            $postreplysql = $postreplysql . ' AND created<' . $endtime;
-        }
+        $studentdata->unique_activedays = $student->unique_activedays;
 
-        $postreplies = $DB->get_records_sql($postreplysql);
-        $uniquepostreply = array();
-        foreach ($postreplies as $postreply) {
-            $uniquepostreply[] = get_midnight($postreply->created);
-        }
-        if ($postreplies) {
-            $studentdata->unique_activedays = count(array_unique($uniquepostreply));
-        } else {
-            $studentdata->unique_activedays = "0";
-        }
         //BL Customization
         //View
-        /** @var \moodle_database $DB */
-        $viewsconditions = [
-            'eventname = ?',
-            'userid = ?'
-        ];
-        $viewsparams = [
-            '\\mod_forum\\event\\discussion_viewed',
-            $student->id
-        ];
-
-        if ($forumid) {
-            $viewsconditions[] = 'contextinstanceid = ?';
-            $viewsparams[] = $cm->id;
-            $viewsconditions[] = 'contextlevel = ?';
-            $viewsparams[] = CONTEXT_MODULE;
-        } else {
-            $viewsconditions[] = 'courseid = ?';
-            $viewsparams[] = $courseid;
-        }
-        if ($starttime) {
-            $viewsconditions[] = 'timecreated > ?';
-            $viewsparams[] = $starttime;
-        }
-        if ($endtime) {
-            $viewsconditions[] = 'timecreated < ?';
-            $viewsparams[] = $endtime;
-        }
-
-        $views = $DB->get_record_sql('SELECT COUNT(*) viewscount FROM {logstore_standard_log} WHERE ' . implode(' AND ', $viewsconditions), $viewsparams);
-        $studentdata->views = $views ? $views->viewscount : 0;
-
-        $uniqueviewdays = $DB->get_record_sql('SELECT COUNT(DISTINCT (timecreated - (timecreated % 86400))) uniqueviewdayscount FROM {logstore_standard_log} WHERE ' . implode(' AND ', $viewsconditions), $viewsparams);
-        $studentdata->uniqueviewdays = $uniqueviewdays ? $uniqueviewdays->uniqueviewdayscount : 0;
+        $studentdata->views = $student->viewscount;
+        $studentdata->uniqueviewdays = $student->uniqueviewdays;
 
         //BL Customization
-        //Word count
-        if ($posts || $replies) {
-            $allpostsql = 'SELECT * FROM {forum_posts} WHERE userid=' . $student->id . ' AND discussion IN ' . $discussionarray;
-            if ($starttime) {
-                $allpostsql = $allpostsql . ' AND created>' . $starttime;
-            }
-            if ($endtime) {
-                $allpostsql = $allpostsql . ' AND created<' . $endtime;
-            }
-            if ($allposts = $DB->get_records_sql($allpostsql)) {
-                $wordcount = 0;
-                foreach ($allposts as $post) {
-                    $wordnum = count_words($post->message);
-                    $wordcount += $wordnum;
-                }
-            }
-        } else {
-            $wordcount = 0;
-        }
-        $studentdata->wordcount = $wordcount;
+        //Word count and multimedia
+        $multimedia = block_forum_report_countwordmultimedia($modcontextidlookup, $student->id, $courseid, $forumid, $starttime, $endtime);
 
-        $multimedianum = 0;
-        $imgnum = 0;
-        $videonum = 0;
-        $audionum = 0;
-        $linknum = 0;
-         if($posts){
-           foreach($posts as $pdata){
-             $multimedia = get_mulutimedia_num($pdata->message);
-             $attachment = block_forum_report_countattachmentmultimedia(
-                $forumid ? $modcontext->id : $modcontextidlookup[$pdata->discussion],
-                $pdata->id
-             );
-             $multimedianum += ($multimedia ? $multimedia->num : 0) + $attachment->num;
-             $imgnum += ($multimedia ? $multimedia->img : 0) + $attachment->img;
-             $videonum += ($multimedia ? $multimedia->video : 0) + $attachment->video;
-             $audionum += ($multimedia ? $multimedia->audio : 0) + $attachment->audio;
-             $linknum += ($multimedia ? $multimedia->link : 0) + $attachment->link;
-             //print_object($pdata->message);
-           }
-         }
-         if($replies){
-           foreach($replies as $reply){
-             $multimedia = get_mulutimedia_num($reply->message);
-             $attachment = block_forum_report_countattachmentmultimedia(
-                $forumid ? $modcontext->id : $modcontextidlookup[$reply->discussion],
-                $reply->id
-             );
-             $multimedianum += ($multimedia ? $multimedia->num : 0) + $attachment->num;
-             $imgnum += ($multimedia ? $multimedia->img : 0) + $attachment->img;
-             $videonum += ($multimedia ? $multimedia->video : 0) + $attachment->video;
-             $audionum += ($multimedia ? $multimedia->audio : 0) + $attachment->audio;
-             $linknum += ($multimedia ? $multimedia->link : 0) + $attachment->link;
-
-           }
-         }
-         $studentdata->multimedia = $multimedianum;
-         $studentdata->multimedia_image = $imgnum;
-         $studentdata->multimedia_video = $videonum;
-         $studentdata->multimedia_audio = $audionum;
-         $studentdata->multimedia_link = $linknum;
+        $studentdata->wordcount = $multimedia->wordcount;
+        $studentdata->multimedia = $multimedia->multimedia;
+        $studentdata->multimedia_image = $multimedia->multimedia_image;
+        $studentdata->multimedia_video = $multimedia->multimedia_video;
+        $studentdata->multimedia_audio = $multimedia->multimedia_audio;
+        $studentdata->multimedia_link = $multimedia->multimedia_link;
 
         //BL Customization
-        // Multimedia.
-//        $multimediasql =   "SELECT COUNT(filename) AS filename FROM `mdl_files` INNER JOIN `mdl_forum_posts`
-//                    ON mdl_files.itemid = mdl_forum_posts.id WHERE mdl_forum_posts.userid = $student->id
-//                    AND NOT mdl_files.filesize = 0  AND  mdl_forum_posts.discussion IN " . $discussionarray;
-//        if ($starttime) {
-//            $multimediasql = $multimediasql . ' AND timecreated>' . $starttime;
-//        }
-//        if ($endtime) {
-//            $multimediasql = $multimediasql . ' AND timecreated<' . $endtime;
-//        }
-//        $multimediacount = $DB->get_records_sql($multimediasql);
-//        foreach ($multimediacount as $num) {
-//            $multimedianum = $num->filename;
-//        }
-//        $studentdata->multimedia =  $multimedianum;
-        //BL Customization
-
         // Engagement levels
         $engagementresult = new \block_forum_report\engagementresult();
         foreach ($engagementcalculators as $engagementcalculator) {
@@ -453,40 +304,12 @@ if (!$startnow) {
         $studentdata->elavg = $engagementresult->getaverage();
         $studentdata->elmax = $engagementresult->getmax();
 
-        //First post & Last post
-        $firstpostsql = 'SELECT MIN(created) mincreated FROM {forum_posts} WHERE userid=' . $student->id . ' AND discussion IN ' . $discussionarray;
-        if ($posts || $replies) {
-
-            $firstpostsql = 'SELECT MIN(created) mincreated FROM {forum_posts} WHERE userid=' . $student->id . ' AND discussion IN ' . $discussionarray;
-            if ($starttime) {
-                $firstpostsql = $firstpostsql . ' AND created>' . $starttime;
-            }
-            if ($endtime) {
-                $firstpostsql = $firstpostsql . ' AND created<' . $endtime;
-            }
-            $firstpost = $DB->get_record_sql($firstpostsql);
-            $firstpostdate = userdate($firstpost->mincreated);
-            $studentdata->firstpost = $firstpostdate;
-
-
-            $lastpostsql = 'SELECT MAX(created) maxcreated FROM {forum_posts} WHERE userid=' . $student->id . ' AND discussion IN ' . $discussionarray;
-            if ($starttime) {
-                $lastpostsql = $lastpostsql . ' AND created>' . $starttime;
-            }
-            if ($endtime) {
-                $lastpostsql = $lastpostsql . ' AND created<' . $endtime;
-            }
-            $lastpost = $DB->get_record_sql($lastpostsql);
-            $lastpostdate = userdate($lastpost->maxcreated);
-            $studentdata->lastpost = $lastpostdate;
-        } else {
-            $studentdata->firstpost = '-';
-            $studentdata->lastpost = '-';
-        }
+        $studentdata->firstpost = $student->firstpost ? userdate($student->firstpost) : '-';
+        $studentdata->lastpost = $student->lastpost ? userdate($student->lastpost) : '-';
 
         if ($reactforuminstalled) {
-            $studentdata->reactionsgiven = block_forum_report_getreactionsgiven($student->id, $discussionarray, $starttime, $endtime);
-            $studentdata->reactionsreceived = block_forum_report_getreactionsreceived($student->id, $discussionarray, $starttime, $endtime);
+            $studentdata->reactionsgiven = block_forum_report_getreactionsgiven($student->id, $courseid, $forumid, $starttime, $endtime);
+            $studentdata->reactionsreceived = block_forum_report_getreactionsreceived($student->id, $courseid, $forumid, $starttime, $endtime);
         }
 
         $data[] = $studentdata;

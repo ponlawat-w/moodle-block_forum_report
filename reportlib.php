@@ -201,7 +201,7 @@ function block_forum_report_getdiscussionmodcontextidlookup($courseid) {
     $forums = $DB->get_records('forum', ['course' => $courseid]);
     foreach ($forums as $forum) {
         $cm = get_coursemodule_from_instance('forum', $forum->id, $courseid, false, MUST_EXIST);
-        $forumlookup[$forum->id] = context_module::instance($cm->id);
+        $forumlookup[$forum->id] = \core\context\module::instance($cm->id);
     }
     $results = [];
     foreach ($forums as $forum) {
@@ -211,6 +211,134 @@ function block_forum_report_getdiscussionmodcontextidlookup($courseid) {
         }
     }
     return $results;
+}
+
+/**
+ * @param string $fieldname
+ * @param int $starttime
+ * @param int $endtime
+ * @param string $prefix
+ * @return string
+ */
+function block_forum_report_gettimecondition($fieldname, $starttime, $endtime, $prefix) {
+    if ($starttime > 0 && $endtime > 0) {
+        return "AND {$fieldname} BETWEEN :{$prefix}starttime AND :{$prefix}endtime";
+    }
+    if ($starttime > 0) {
+        return "AND {$fieldname} >= :{$prefix}starttime";
+    }
+    if ($endtime > 0) {
+        return "AND {$fieldname} <= :{$prefix}endtime";
+    }
+    return '';
+}
+
+/**
+ * @param \core\context\course|\core\context\module $context
+ * @param int $courseid
+ * @param int $forumid
+ * @param int $groupid
+ * @param string|null|0|'0' $country
+ * @param int $starttime
+ * @param int $endtime
+ * @return stdClass[]
+ */
+function block_forum_report_getbasicreports(
+    $context,
+    $courseid,
+    $forumid = 0,
+    $groupid = 0,
+    $country = null,
+    $starttime = 0,
+    $endtime = 0
+) {
+    /** @var $DB \moodle_database */
+    global $DB;
+
+    $capacityjoin = get_with_capability_join($context, 'mod/forum:viewdiscussion', 'u.id');
+    $params = $capacityjoin->params;
+
+    $groupcondition = $groupid ? 'AND ug.id = :group' : '';
+    if ($groupid) {
+        $params['group'] = $groupid;
+    }
+
+    $countrycondition = (is_null($country) || !$country) ? '' : 'AND u.country = :country';
+    $params['country'] = $country;
+
+    $discussioncondition = $forumid ? 'fd.forum = :fdforum' : 'fd.course = :fdcourse';
+    $params[$forumid ? 'fdforum' : 'fdcourse'] = $forumid ? $forumid : $courseid;
+
+    $posttimecondition = block_forum_report_gettimecondition('fp.created', $starttime, $endtime, 'fp');
+    if ($starttime > 0) $params['fpstarttime'] = $starttime;
+    if ($endtime > 0) $params['fpendtime'] = $endtime;
+
+    $logcondition = $forumid ? 'lsl.contextinstanceid = :contextinstanceid AND lsl.contextlevel = :contextlevel' : 'lsl.courseid = :lslcourse';
+    if ($forumid) {
+        $params['contextinstanceid'] = $context->instanceid;
+        $params['contextlevel'] = $context::LEVEL;
+    } else {
+        $params['lslcourse'] = $courseid;
+    }
+
+    $logtimecondition = block_forum_report_gettimecondition('lsl.timecreated', $starttime, $endtime, 'lsl');
+    if ($starttime > 0) $params['lslstarttime'] = $starttime;
+    if ($endtime > 0) $params['lslendtime'] = $endtime;
+
+    $sql = <<<SQL
+        SELECT * FROM (
+            SELECT
+                u.id,
+                username,
+                firstname,
+                lastname,
+                array_to_string(array_agg(g.groupname), ',') groupnames,
+                country,
+                institution
+            FROM {user} u
+                {$capacityjoin->joins}
+                LEFT OUTER JOIN (
+                    SELECT ug.id id, ug.name groupname, gm.userid userid
+                    FROM {groups_members} gm
+                    JOIN {groups} ug ON gm.groupid = ug.id
+                    WHERE ug.courseid = :ugcourse {$groupcondition}
+                ) g ON g.userid = u.id
+            WHERE {$capacityjoin->wheres} {$countrycondition}
+            GROUP BY u.id
+        ) t1 LEFT OUTER JOIN (
+            SELECT
+                u.id,
+                SUM(CASE WHEN fp.parent = 0 THEN 1 ELSE 0 END) posts,
+                SUM(CASE WHEN fp.parent != 0 THEN 1 ELSE 0 END) replies,
+                COUNT(DISTINCT FLOOR(fp.created / 86400)) unique_activedays,
+                MIN(fp.created) firstpost,
+                MAX(fp.created) lastpost
+            FROM {user} u
+                LEFT OUTER JOIN {forum_posts} fp
+                    ON fp.userid = u.id
+                    AND fp.discussion IN (
+                        SELECT fd.id FROM {forum_discussions} fd
+                        WHERE {$discussioncondition}
+                    ) {$posttimecondition}
+            GROUP BY u.id
+        ) t2 ON t1.id = t2.id LEFT OUTER JOIN (
+            SELECT
+                u.id,
+                COUNT(DISTINCT lsl.id) viewscount,
+                COUNT(DISTINCT FLOOR(lsl.timecreated)) uniqueviewdays
+            FROM {user} u
+                LEFT OUTER JOIN {logstore_standard_log} lsl
+                    ON lsl.userid = u.id
+                    AND lsl.eventname = '\\mod_forum\\event\\discussion_viewed'
+                    AND {$logcondition}
+                    {$logtimecondition}
+            GROUP BY u.id
+        ) t3 ON t2.id = t3.id;
+    SQL;
+
+    $params['ugcourse'] = $courseid;
+
+    return $DB->get_records_sql($sql, $params);
 }
 
 function block_forum_report_countattachmentmultimedia($modcontextid, $postid) {
@@ -245,43 +373,125 @@ function block_forum_report_reactforuminstalled() {
     return isset($pluginmanager->get_installed_plugins('local')['reactforum']);
 }
 
-function block_forum_report_getreactionsgiven($userid, $discussionarray, $starttime, $endtime) {
-    /**
-     * @var \moodle_database $DB
-     */
+function block_forum_report_getreactionsgiven($userid, $courseid, $forumid, $starttime, $endtime) {
+    /** @var \moodle_database $DB */
     global $DB;
-    $sql = 'SELECT id FROM {forum_posts} WHERE discussion IN ' . $discussionarray;
-    if ($starttime) {
-        $sql .= ' AND created > ' . $starttime;
-    }
-    if ($endtime) {
-        $sql .= ' AND created < ' . $endtime;
-    }
-    $postids = array_map(function($post) { return $post->id; }, $DB->get_records_sql($sql));
-    if (!count($postids)) {
-        return 0;
-    }
-    list($postidssql, $postidsparams) = $DB->get_in_or_equal($postids);
-    $params = array_merge([$userid], $postidsparams);
-    return $DB->get_record_sql('SELECT COUNT(*) reactionsgiven FROM {reactforum_reacted} WHERE userid = ? AND post ' . $postidssql, $params)->reactionsgiven;
+    $timecondition = block_forum_report_gettimecondition('fp.created', $starttime, $endtime, '');
+    $sql = <<<SQL
+        SELECT COUNT(rr.*) reactionsgiven
+            FROM {reactforum_reacted} rr
+            JOIN {forum_posts} fp ON rr.post = fp.id
+            JOIN {forum_discussions} fd ON fp.discussion = fd.id
+            WHERE rr.userid = :userid
+                AND fd.course = :courseid OR (
+                    :forumid1 != 0 AND fd.forum = :forumid2
+                )
+                {$timecondition}
+    SQL;
+    $params = [
+        'userid' => $userid,
+        'courseid' => $courseid,
+        'forumid1' => $forumid,
+        'forumid2' => $forumid
+    ];
+    if ($starttime) $params['starttime'] = $starttime;
+    if ($endtime) $params['endtime'] = $endtime;
+    return $DB->get_record_sql($sql, $params)->reactionsgiven;
 }
 
-function block_forum_report_getreactionsreceived($userid, $discussionarray, $starttime, $endtime) {
-    /**
-     * @var \moodle_database $DB
-     */
+function block_forum_report_getreactionsreceived($userid, $courseid, $forumid, $starttime, $endtime) {
+    /** @var \moodle_database $DB */
     global $DB;
-    $sql = 'SELECT id FROM {forum_posts} WHERE userid = ? AND discussion IN ' . $discussionarray;
-    if ($starttime) {
-        $sql .= ' AND created > ' . $starttime;
+    $timecondition = block_forum_report_gettimecondition('fp.created', $starttime, $endtime, '');
+    $sql = <<<SQL
+        SELECT COUNT(rr.*) reactionsgiven
+            FROM {reactforum_reacted} rr
+            JOIN {forum_posts} fp ON rr.post = fp.id
+            JOIN {forum_discussions} fd ON fp.discussion = fd.id
+            WHERE fp.userid = :userid
+                AND fd.course = :courseid OR (
+                    :forumid1 != 0 AND fd.forum = :forumid2
+                )
+                {$timecondition}
+    SQL;
+    $params = [
+        'userid' => $userid,
+        'courseid' => $courseid,
+        'forumid1' => $forumid,
+        'forumid2' => $forumid
+    ];
+    if ($starttime) $params['starttime'] = $starttime;
+    if ($endtime) $params['endtime'] = $endtime;
+    return $DB->get_record_sql($sql, $params)->reactionsgiven;
+}
+
+/**
+ * @param \core\context\module[] $modcontextidlookup
+ * @param int $userid
+ * @param int $courseid
+ * @param int $forumid
+ * @param int $starttime
+ * @param int $endtime
+ * @return stdClass
+ */
+function block_forum_report_countwordmultimedia(
+    $modcontextidlookup,
+    $userid,
+    $courseid,
+    $forumid,
+    $starttime,
+    $endtime
+) {
+    /** @var \moodle_database $DB */
+    global $DB;
+    $result = new stdClass();
+    $result->wordcount = 0;
+    $result->multimedia = 0;
+    $result->multimedia_image = 0;
+    $result->multimedia_video = 0;
+    $result->multimedia_audio = 0;
+    $result->multimedia_link = 0;
+
+    $timecondition = block_forum_report_gettimecondition('fp.created', $starttime, $endtime, '');
+    $sql = <<<SQL
+        SELECT fp.*
+            FROM {forum_posts} fp
+            JOIN {forum_discussions} fd ON fp.discussion = fd.id
+            JOIN {context} c ON c.contextlevel = :contextlevel AND c.instanceid = fd.forum
+            WHERE fp.userid = :userid
+                AND fd.course = :courseid OR (
+                    :forumid1 != 0 AND fd.forum = :forumid2
+                )
+                {$timecondition}
+    SQL;
+    $params = [
+        'userid' => $userid,
+        'courseid' => $courseid,
+        'forumid1' => $forumid,
+        'forumid2' => $forumid,
+        'contextlevel' => \core\context\module::LEVEL
+    ];
+    if ($starttime) $params['starttime'] = $starttime;
+    if ($endtime) $params['endtime'] = $endtime;
+    $posts = $DB->get_records_sql($sql, $params);
+    foreach ($posts as $post) {
+        $multimedia = get_mulutimedia_num($post->message);
+        $attachment = block_forum_report_countattachmentmultimedia($modcontextidlookup[$post->discussion], $post->id);
+
+        $result->wordcount += count_words($post->message);
+        $result->multimedia += ($multimedia ? $multimedia->num : 0) + $attachment->num;
+        $result->multimedia_image += ($multimedia ? $multimedia->img : 0) + $attachment->img;
+        $result->multimedia_video += ($multimedia ? $multimedia->video : 0) + $attachment->video;
+        $result->multimedia_audio += ($multimedia ? $multimedia->audio : 0) + $attachment->audio;
+        $result->multimedia_link += ($multimedia ? $multimedia->link : 0) + $attachment->link;
     }
-    if ($endtime) {
-        $sql .= ' AND created < ' . $endtime;
-    }
-    $postids = array_map(function($post) { return $post->id; }, $DB->get_records_sql($sql, [$userid]));
-    if (!count($postids)) {
-        return 0;
-    }
-    list($postidssql, $postidsparams) = $DB->get_in_or_equal($postids);
-    return $DB->get_record_sql('SELECT COUNT(*) reactionsreceived FROM {reactforum_reacted} WHERE post ' . $postidssql, $postidsparams)->reactionsreceived;
+
+    $result->wordcount = $result->wordcount > 0 ? $result->wordcount : '';
+    $result->multimedia = $result->multimedia > 0 ? $result->multimedia : '';
+    $result->multimedia_image = $result->multimedia_image > 0 ? $result->multimedia_image : '';
+    $result->multimedia_video = $result->multimedia_video > 0 ? $result->multimedia_video : '';
+    $result->multimedia_audio = $result->multimedia_audio > 0 ? $result->multimedia_audio : '';
+    $result->multimedia_link = $result->multimedia_link > 0 ? $result->multimedia_link : '';
+
+    return $result;
 }
