@@ -38,7 +38,7 @@ $students = block_forum_report_getbasicreports(
 
 $countries = get_string_manager()->get_list_of_countries();
 
-$modcontextidlookup = block_forum_report_getdiscussionmodcontextidlookup($course->id);
+$modcontextidlookup = block_forum_report_getforummodcontextidlookup($course->id);
 
 $engagementcalculators = [];
 /** @var \moodle_database $DB */

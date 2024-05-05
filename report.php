@@ -175,7 +175,7 @@ if (!$startnow) {
 
     echo '<br>';
 
-    $modcontextidlookup = block_forum_report_getdiscussionmodcontextidlookup($course->id);
+    $modcontextidlookup = block_forum_report_getforummodcontextidlookup($course->id);
 
     $table = new flexible_table('forum_report_table');
     //$table->head = array($strname,$strcounrty,$strposts,$strreplies,$strwordcount,$strviews,$strfp,$strlp,$strsr,$strcl);

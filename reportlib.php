@@ -195,22 +195,15 @@ function block_forum_report_checkpermission($courseid, $groupid) {
     require_capability('block/forum_report:viewothergroups', $contextblock);
 }
 
-function block_forum_report_getdiscussionmodcontextidlookup($courseid) {
+function block_forum_report_getforummodcontextidlookup($courseid) {
     global $DB;
     $forumlookup = [];
     $forums = $DB->get_records('forum', ['course' => $courseid]);
     foreach ($forums as $forum) {
         $cm = get_coursemodule_from_instance('forum', $forum->id, $courseid, false, MUST_EXIST);
-        $forumlookup[$forum->id] = \core\context\module::instance($cm->id);
+        $forumlookup[$forum->id] = \core\context\module::instance($cm->id)->id;
     }
-    $results = [];
-    foreach ($forums as $forum) {
-        $discussions = $DB->get_records('forum_discussions', ['forum' => $forum->id]);
-        foreach ($discussions as $dicussion) {
-            $results[$dicussion->id] = $forumlookup[$forum->id]->id;
-        }
-    }
-    return $results;
+    return $forumlookup;
 }
 
 /**
@@ -286,7 +279,11 @@ function block_forum_report_getbasicreports(
     if ($endtime > 0) $params['lslendtime'] = $endtime;
 
     $sql = <<<SQL
-        SELECT * FROM (
+        SELECT
+            t1.id, username, firstname, lastname, groupnames, country, institution,
+            posts, replies, unique_activedays, firstpost, lastpost,
+            viewscount, uniqueviewdays
+        FROM (
             SELECT
                 u.id,
                 username,
@@ -300,7 +297,7 @@ function block_forum_report_getbasicreports(
                 LEFT OUTER JOIN (
                     SELECT ug.id id, ug.name groupname, gm.userid userid
                     FROM {groups_members} gm
-                    JOIN {groups} ug ON gm.groupid = ug.id
+                        JOIN {groups} ug ON gm.groupid = ug.id
                     WHERE ug.courseid = :ugcourse {$groupcondition}
                 ) g ON g.userid = u.id
             WHERE {$capacityjoin->wheres} {$countrycondition}
@@ -316,10 +313,10 @@ function block_forum_report_getbasicreports(
             FROM {user} u
                 LEFT OUTER JOIN {forum_posts} fp
                     ON fp.userid = u.id
-                    AND fp.discussion IN (
-                        SELECT fd.id FROM {forum_discussions} fd
-                        WHERE {$discussioncondition}
-                    ) {$posttimecondition}
+            WHERE fp.discussion IN (
+                SELECT fd.id FROM {forum_discussions} fd
+                WHERE {$discussioncondition}
+            ) {$posttimecondition}
             GROUP BY u.id
         ) t2 ON t1.id = t2.id LEFT OUTER JOIN (
             SELECT
@@ -329,9 +326,9 @@ function block_forum_report_getbasicreports(
             FROM {user} u
                 LEFT OUTER JOIN {logstore_standard_log} lsl
                     ON lsl.userid = u.id
-                    AND lsl.eventname = '\\mod_forum\\event\\discussion_viewed'
-                    AND {$logcondition}
-                    {$logtimecondition}
+            WHERE lsl.eventname = '\\mod_forum\\event\\discussion_viewed'
+                AND {$logcondition}
+                {$logtimecondition}
             GROUP BY u.id
         ) t3 ON t2.id = t3.id;
     SQL;
@@ -380,12 +377,10 @@ function block_forum_report_getreactionsgiven($userid, $courseid, $forumid, $sta
     $sql = <<<SQL
         SELECT COUNT(rr.*) reactionsgiven
             FROM {reactforum_reacted} rr
-            JOIN {forum_posts} fp ON rr.post = fp.id
-            JOIN {forum_discussions} fd ON fp.discussion = fd.id
+                JOIN {forum_posts} fp ON rr.post = fp.id
+                JOIN {forum_discussions} fd ON fp.discussion = fd.id
             WHERE rr.userid = :userid
-                AND fd.course = :courseid OR (
-                    :forumid1 != 0 AND fd.forum = :forumid2
-                )
+                AND ((:forumid1 = 0 AND fd.course = :courseid) OR fd.forum = :forumid2)
                 {$timecondition}
     SQL;
     $params = [
@@ -409,9 +404,7 @@ function block_forum_report_getreactionsreceived($userid, $courseid, $forumid, $
             JOIN {forum_posts} fp ON rr.post = fp.id
             JOIN {forum_discussions} fd ON fp.discussion = fd.id
             WHERE fp.userid = :userid
-                AND fd.course = :courseid OR (
-                    :forumid1 != 0 AND fd.forum = :forumid2
-                )
+                AND ((:forumid1 = 0 AND fd.course = :courseid) OR fd.forum = :forumid2)
                 {$timecondition}
     SQL;
     $params = [
@@ -454,7 +447,7 @@ function block_forum_report_countwordmultimedia(
 
     $timecondition = block_forum_report_gettimecondition('fp.created', $starttime, $endtime, '');
     $sql = <<<SQL
-        SELECT fp.*
+        SELECT fp.*, fd.forum
             FROM {forum_posts} fp
             JOIN {forum_discussions} fd ON fp.discussion = fd.id
             JOIN {context} c ON c.contextlevel = :contextlevel AND c.instanceid = fd.forum
@@ -476,7 +469,7 @@ function block_forum_report_countwordmultimedia(
     $posts = $DB->get_records_sql($sql, $params);
     foreach ($posts as $post) {
         $multimedia = get_mulutimedia_num($post->message);
-        $attachment = block_forum_report_countattachmentmultimedia($modcontextidlookup[$post->discussion], $post->id);
+        $attachment = block_forum_report_countattachmentmultimedia($modcontextidlookup[$post->forum], $post->id);
 
         $result->wordcount += count_words($post->message);
         $result->multimedia += ($multimedia ? $multimedia->num : 0) + $attachment->num;
