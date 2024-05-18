@@ -251,6 +251,7 @@ function block_forum_report_getbasicreports(
     $capacityjoin = get_with_capability_join($context, 'mod/forum:viewdiscussion', 'u.id');
     $params = $capacityjoin->params;
 
+    $groupjoin = $groupid ? 'JOIN' : 'LEFT OUTER JOIN';
     $groupcondition = $groupid ? 'AND ug.id = :group' : '';
     if ($groupid) {
         $params['group'] = $groupid;
@@ -278,6 +279,10 @@ function block_forum_report_getbasicreports(
     if ($starttime > 0) $params['lslstarttime'] = $starttime;
     if ($endtime > 0) $params['lslendtime'] = $endtime;
 
+    $selectgroupsql = $DB->get_dbfamily() === 'postgres' ?
+        "array_to_string(array_agg(g.groupname), ',') groupnames"
+        : "GROUP_CONCAT(g.groupname SEPARATOR ',') groupnames";
+
     $sql = <<<SQL
         SELECT
             t1.id, username, firstname, lastname, groupnames, country, institution,
@@ -289,12 +294,12 @@ function block_forum_report_getbasicreports(
                 username,
                 firstname,
                 lastname,
-                array_to_string(array_agg(g.groupname), ',') groupnames,
+                {$selectgroupsql},
                 country,
                 institution
             FROM {user} u
                 {$capacityjoin->joins}
-                LEFT OUTER JOIN (
+                {$groupjoin} (
                     SELECT ug.id id, ug.name groupname, gm.userid userid
                     FROM {groups_members} gm
                         JOIN {groups} ug ON gm.groupid = ug.id
@@ -375,7 +380,7 @@ function block_forum_report_getreactionsgiven($userid, $courseid, $forumid, $sta
     global $DB;
     $timecondition = block_forum_report_gettimecondition('fp.created', $starttime, $endtime, '');
     $sql = <<<SQL
-        SELECT COUNT(rr.*) reactionsgiven
+        SELECT COUNT(rr.id) reactionsgiven
             FROM {reactforum_reacted} rr
                 JOIN {forum_posts} fp ON rr.post = fp.id
                 JOIN {forum_discussions} fd ON fp.discussion = fd.id
@@ -399,7 +404,7 @@ function block_forum_report_getreactionsreceived($userid, $courseid, $forumid, $
     global $DB;
     $timecondition = block_forum_report_gettimecondition('fp.created', $starttime, $endtime, '');
     $sql = <<<SQL
-        SELECT COUNT(rr.*) reactionsgiven
+        SELECT COUNT(rr.id) received
             FROM {reactforum_reacted} rr
             JOIN {forum_posts} fp ON rr.post = fp.id
             JOIN {forum_discussions} fd ON fp.discussion = fd.id
@@ -415,7 +420,7 @@ function block_forum_report_getreactionsreceived($userid, $courseid, $forumid, $
     ];
     if ($starttime) $params['starttime'] = $starttime;
     if ($endtime) $params['endtime'] = $endtime;
-    return $DB->get_record_sql($sql, $params)->reactionsgiven;
+    return $DB->get_record_sql($sql, $params)->received;
 }
 
 /**
@@ -452,9 +457,7 @@ function block_forum_report_countwordmultimedia(
             JOIN {forum_discussions} fd ON fp.discussion = fd.id
             JOIN {context} c ON c.contextlevel = :contextlevel AND c.instanceid = fd.forum
             WHERE fp.userid = :userid
-                AND fd.course = :courseid OR (
-                    :forumid1 != 0 AND fd.forum = :forumid2
-                )
+                AND ((:forumid1 = 0 AND fd.course = :courseid) OR fd.forum = :forumid2)
                 {$timecondition}
     SQL;
     $params = [
