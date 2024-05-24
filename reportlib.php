@@ -268,6 +268,7 @@ function block_forum_report_getbasicreports(
     if ($endtime > 0) $params['fpendtime'] = $endtime;
 
     $logcondition = $forumid ? 'lsl.contextinstanceid = :contextinstanceid AND lsl.contextlevel = :contextlevel' : 'lsl.courseid = :lslcourse';
+    $params['lsleventname'] = '\mod_forum\event\discussion_viewed';
     if ($forumid) {
         $params['contextinstanceid'] = $context->instanceid;
         $params['contextlevel'] = $context::LEVEL;
@@ -327,11 +328,11 @@ function block_forum_report_getbasicreports(
             SELECT
                 u.id,
                 COUNT(DISTINCT lsl.id) viewscount,
-                COUNT(DISTINCT FLOOR(lsl.timecreated)) uniqueviewdays
+                COUNT(DISTINCT FLOOR(lsl.timecreated / 86400)) uniqueviewdays
             FROM {user} u
                 LEFT OUTER JOIN {logstore_standard_log} lsl
                     ON lsl.userid = u.id
-            WHERE lsl.eventname = '\\mod_forum\\event\\discussion_viewed'
+            WHERE lsl.eventname = :lsleventname
                 AND {$logcondition}
                 {$logtimecondition}
             GROUP BY u.id
