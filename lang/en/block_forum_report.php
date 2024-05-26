@@ -22,6 +22,10 @@
  */
 
 $string['pluginname'] = 'Forum Report';
+
+$string['executionschedule'] = 'Execution Schedule';
+$string['executionschedule_help'] = 'Numbers of time in 24-hour format to execute schedule, separated with comma (,). For example, "3, 15" for 3AM and 3PM of everyday.';
+
 $string['selectforum'] = 'Select forum';
 $string['alloncourse'] = 'All on this course';
 $string['replies'] = 'Replies';

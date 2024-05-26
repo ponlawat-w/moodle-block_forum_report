@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="block/forum_report" VERSION="20240526" COMMENT="XMLDB file for Forum Report Block"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
+>
+    <TABLES>
+        <TABLE NAME="forum_report_schedules" COMMENT="Forum Report Schedules">
+            <FIELDS>
+                <FIELD NAME="id" SEQUENCE="true" TYPE="int" NOTNULL="true" LENGTH="11" />
+                <FIELD NAME="userid" SEQUENCE="false" TYPE="int" NOTNULL="true" LENGTH="11" />
+                <FIELD NAME="createdtime" SEQUENCE="false" TYPE="int" NOTNULL="true" LENGTH="11" />
+                <FIELD NAME="status" SEQUENCE="false" TYPE="int" NOTNULL="true" DEFAULT="0" LENGTH="11" />
+                <FIELD NAME="message" SEQUENCE="false" TYPE="text" NOTNULL="false" />
+                <FIELD NAME="course" SEQUENCE="false" TYPE="int" NOTNULL="true" DEFAULT="0" LENGTH="11" />
+                <FIELD NAME="country" SEQUENCE="false" TYPE="char" NOTNULL="true" DEFAULT="" LENGTH="255" />
+                <FIELD NAME="group" SEQUENCE="false" TYPE="int" NOTNULL="true" DEFAULT="0" LENGTH="11" />
+                <FIELD NAME="forum" SEQUENCE="false" TYPE="int" NOTNULL="true" DEFAULT="0" LENGTH="11" />
+                <FIELD NAME="starttime" SEQUENCE="false" TYPE="int" NOTNULL="true" DEFAULT="0" LENGTH="11" />
+                <FIELD NAME="endtime" SEQUENCE="false" TYPE="int" NOTNULL="true" DEFAULT="0" LENGTH="11" />
+                <FIELD NAME="engagementmethod" SEQUENCE="false" TYPE="int" NOTNULL="true" DEFAULT="0" LENGTH="11" />
+                <FIELD NAME="engagementinternational" SEQUENCE="false" TYPE="int" NOTNULL="true" DEFAULT="0" LENGTH="1" />
+            </FIELDS>
+            <KEYS>
+                <KEY NAME="primary" TYPE="primary" FIELDS="id" />
+            </KEYS>
+            <INDEXES>
+                <INDEX NAME="status_idx" UNIQUE="false" FIELDS="status" />
+                <INDEX NAME="userid_idx" UNIQUE="false" FIELDS="userid" />
+            </INDEXES>
+        </TABLE>
+        <TABLE NAME="forum_report_results" COMMENT="Forum Report Results">
+            <FIELDS>
+                <FIELD NAME="id" SEQUENCE="true" TYPE="int" NOTNULL="true" LENGTH="11" />
+                <FIELD NAME="report" SEQUENCE="false" TYPE="int" NOTNULL="true" />
+                <FIELD NAME="username" SEQUENCE="false" TYPE="char" NOTNULL="false" LENGTH="255" />
+                <FIELD NAME="firstname" SEQUENCE="false" TYPE="char" NOTNULL="false" LENGTH="255" />
+                <FIELD NAME="lastname" SEQUENCE="false" TYPE="char" NOTNULL="false" LENGTH="255" />
+                <FIELD NAME="group" SEQUENCE="false" TYPE="char" NOTNULL="false" LENGTH="255" />
+                <FIELD NAME="country" SEQUENCE="false" TYPE="char" NOTNULL="false" LENGTH="255" />
+                <FIELD NAME="instituion" SEQUENCE="false" TYPE="char" NOTNULL="false" LENGTH="255" />
+                <FIELD NAME="posts" SEQUENCE="false" TYPE="int" NOTNULL="false" LENGTH="11" />
+                <FIELD NAME="replies" SEQUENCE="false" TYPE="int" NOTNULL="false" LENGTH="11" />
+                <FIELD NAME="uniquedaysactive" SEQUENCE="false" TYPE="int" NOTNULL="false" LENGTH="11" />
+                <FIELD NAME="views" SEQUENCE="false" TYPE="int" NOTNULL="false" LENGTH="11" />
+                <FIELD NAME="uniquedaysviewed" SEQUENCE="false" TYPE="int" NOTNULL="false" LENGTH="11" />
+                <FIELD NAME="wordcount" SEQUENCE="false" TYPE="int" NOTNULL="false" LENGTH="11" />
+                <FIELD NAME="multimedia" SEQUENCE="false" TYPE="int" NOTNULL="false" LENGTH="11" />
+                <FIELD NAME="images" SEQUENCE="false" TYPE="int" NOTNULL="false" LENGTH="11" />
+                <FIELD NAME="videos" SEQUENCE="false" TYPE="int" NOTNULL="false" LENGTH="11" />
+                <FIELD NAME="audios" SEQUENCE="false" TYPE="int" NOTNULL="false" LENGTH="11" />
+                <FIELD NAME="links" SEQUENCE="false" TYPE="int" NOTNULL="false" LENGTH="11" />
+                <FIELD NAME="engagement1" SEQUENCE="false" TYPE="int" NOTNULL="false" LENGTH="11" />
+                <FIELD NAME="engagement2" SEQUENCE="false" TYPE="int" NOTNULL="false" LENGTH="11" />
+                <FIELD NAME="engagement3" SEQUENCE="false" TYPE="int" NOTNULL="false" LENGTH="11" />
+                <FIELD NAME="engagement4" SEQUENCE="false" TYPE="int" NOTNULL="false" LENGTH="11" />
+                <FIELD NAME="averageengagement" SEQUENCE="false" TYPE="float" NOTNULL="false" />
+                <FIELD NAME="maximumengagement" SEQUENCE="false" TYPE="int" NOTNULL="false" LENGTH="11" />
+                <FIELD NAME="firstpost" SEQUENCE="false" TYPE="int" NOTNULL="false" LENGTH="11" />
+                <FIELD NAME="lastpost" SEQUENCE="false" TYPE="int" NOTNULL="false" LENGTH="11" />
+                <FIELD NAME="reactionsgiven" SEQUENCE="false" TYPE="int" NOTNULL="false" LENGTH="11" />
+                <FIELD NAME="reactionsreceived" SEQUENCE="false" TYPE="int" NOTNULL="false" LENGTH="11" />
+            </FIELDS>
+            <KEYS>
+                <KEY NAME="primary" TYPE="primary" FIELDS="id" />
+            </KEYS>
+            <INDEXES>
+                <INDEX NAME="report_idx" UNIQUE="false" FIELDS="report" />
+            </INDEXES>
+        </TABLE>
+    </TABLES>
+</XMLDB>
