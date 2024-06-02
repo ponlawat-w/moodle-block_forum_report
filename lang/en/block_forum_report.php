@@ -56,6 +56,20 @@ $string['uniqueactive'] = 'Unique days active';
 $string['perpage'] = 'No. of records per page';
 //BL Customized Code <<--
 
+$string['requestnewreport'] = 'Request a new report';
+$string['myrequestedreports'] = 'My Requested Reports';
+$string['requestedtime'] = 'Requested Time';
+$string['scheduledtime'] = 'Scheduled Time';
+$string['status'] = 'Status';
+$string['actions'] = 'Actions';
+$string['view'] = 'View';
+$string['delete'] = 'Delete';
+$string['nodata'] = 'There are no data to display.';
+$string['status_scheduled'] = 'Scheduled';
+$string['status_executing'] = 'Running…';
+$string['status_error'] = 'Failed';
+$string['status_finish'] = 'Finished';
+
 //Reminder mail
 $string['remindsubject'] = 'Reminder to participate in the international exchange';
 $string['remindmessage'] = 'We\'ve noticed you haven\'t been participating in the international online exchange. Please log in and reply to others using the forums. Good luck!';

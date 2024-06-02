@@ -15,34 +15,40 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 require_once('reportlib.php');
-require_once($CFG->libdir.'/navigationlib.php');
+require_once($CFG->libdir . '/navigationlib.php');
 
 defined('MOODLE_INTERNAL') || die();
 
-class block_forum_report extends block_base {
-    function init() {
+class block_forum_report extends block_base
+{
+    function init()
+    {
         $this->title = get_string('pluginname', 'block_forum_report');
     }
 
-    public function has_config() {
+    public function has_config()
+    {
         return true;
     }
 
-    function applicable_formats() {
-        return array('course'=>true);
+    function applicable_formats()
+    {
+        return array('course' => true);
     }
 
-    function instance_config_save($data, $nolongerused = false) {
+    function instance_config_save($data, $nolongerused = false)
+    {
         parent::instance_config_save($data);
     }
 
-    function get_content() {
-        global $CFG, $DB, $OUTPUT, $USER,$COURSE;
+    function get_content()
+    {
+        global $CFG, $DB, $OUTPUT, $USER, $COURSE;
         $context = $this->page->context;
-        
+
         // Removed flat navigation as it is deprecated since Moodle 4
-        
-        if($this->content !== NULL) {
+
+        if ($this->content !== NULL) {
             return $this->content;
         }
         $this->content = new stdClass;
@@ -51,59 +57,18 @@ class block_forum_report extends block_base {
         $this->content->footer = '';
 
         $course = $this->page->course;
-        $cm = $this->page->cm;
         $context = $this->page->context;
-        if(!has_capability('block/forum_report:view', $context)){
+        if (!has_capability('block/forum_report:view', $context)) {
             return;
         }
-        
-        //has_capabirity viewreport
-        
-        if(!$cm){
-            $archetypes = array();
-            $forums = $DB->get_records('forum',array('course'=>$course->id));
-            $tableurl = new moodle_url('/blocks/forum_report/report.php', array('sesskey' => sesskey()));
-            $this->content->text = '<form action="'.$tableurl.'" method="POST">';
-            /*
-            $this->content->text .= '<select class="custom-select" name="forum" id="forum" onchange="submit(this.form)">';
-            $this->content->text .= '<option disabled selected>'.get_string('selectforum','block_forum_report').'</option>';
-            $this->content->text .= '<option value="0">'.get_string('alloncourse','block_forum_report').'</option>';
-                foreach($forums as $forum){
-                    $this->content->text .= '<option value="'.$forum->id.'">'.$forum->name.'</option>';
-                }
-                $this->content->text .= '</optiongroup>';
-            
-            $this->content->text .= '</select>';
-            */
-            $this->content->text .= '<input type="submit" value="'.get_string('showreport','block_forum_report').'">';
-            $this->content->text .= '<input type="hidden" name="course" value="'.$course->id.'">';
-            $this->content->text .= '<input type="hidden" name="group" value="0">';
-            $this->content->text .= '<input type="hidden" name="country" value="0">';
-            $this->content->text .= '<input type="hidden" name="startnow" value="1">';
-            $this->content->text .= '</form>';
-            return $this->content;
-        }else{
-            return;
-            $modinfo = get_fast_modinfo($course);
-            $modfullnames = array();
 
-            $archetypes = array();
-            $forums = $DB->get_records('forum',array('course'=>$course->id));
-            $tableurl = new moodle_url('/blocks/forum_report/report.php', array('sesskey' => sesskey()));
-            $this->content->text = '<form action="'.$tableurl.'" method="POST">';
-            $this->content->text .= '<input type="submit" value="'.get_string('showreport','block_forum_report').'">';
-            $this->content->text .= '<input type="hidden" name="course" value="'.$course->id.'">';
-            $this->content->text .= '<input type="hidden" name="group" value="0">';
-            $this->content->text .= '<input type="hidden" name="country" value="0">';
-            $this->content->text .= '<input type="hidden" name="startnow" value="1">';
-            $this->content->text .= '</form>';
-            return $this->content;
-        }
+        $url = new \moodle_url('/blocks/forum_report/schedule.php', ['course' => $course->id]);
+        $this->content->text = html_writer::link($url, get_string('showreport', 'block_forum_report'), ['class' => 'btn btn-primary']);
+        return $this->content;
     }
 
-    function instance_allow_multiple() {
+    function instance_allow_multiple()
+    {
         return false;
     }
 }
-
-

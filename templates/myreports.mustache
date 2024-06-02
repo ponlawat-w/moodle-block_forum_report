@@ -1,0 +1,36 @@
+{{!
+@template block_forum_report/myreports
+}}
+
+<table class="table table-hover table-bordered">
+    <thead>
+        <tr>
+            <th colspan="4" class="bg-primary text-white text-center">
+                {{#str}} myrequestedreports, block_forum_report {{/str}}
+            </th>
+        </tr>
+        <tr>
+            <th class="bg-secondary">{{#str}} requestedtime, block_forum_report {{/str}}</th>
+            <th class="bg-secondary">{{#str}} scheduledtime, block_forum_report {{/str}}</th>
+            <th class="bg-secondary">{{#str}} status, block_forum_report {{/str}}</th>
+            <th class="bg-secondary">{{#str}} actions, block_forum_report {{/str}}</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{#reports}}
+        <tr>
+            <td>{{requestedtime}}</td>
+            <td>{{scheduledtime}}</td>
+            <td class="{{statusClass}}">{{status}}</td>
+            <td><a href="{{viewurl}}">{{#str}} view {{/str}}</a></td>
+        </tr>
+        {{/reports}}
+        {{^reports}}
+        <tr>
+            <td colspan="4">
+                {{#str}} nodata, block_forum_report {{/str}}
+            </td>
+        </tr>
+        {{/reports}}
+    </tbody>
+</table>

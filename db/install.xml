@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="block/forum_report" VERSION="20240526" COMMENT="XMLDB file for Forum Report Block"
+<XMLDB PATH="blocks/forum_report/db" VERSION="2024060201" COMMENT="XMLDB file for Forum Report Block"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
 >
@@ -9,16 +9,17 @@
                 <FIELD NAME="id" SEQUENCE="true" TYPE="int" NOTNULL="true" LENGTH="11" />
                 <FIELD NAME="userid" SEQUENCE="false" TYPE="int" NOTNULL="true" LENGTH="11" />
                 <FIELD NAME="createdtime" SEQUENCE="false" TYPE="int" NOTNULL="true" LENGTH="11" />
+                <FIELD NAME="processedtime" SEQUENCE="false" TYPE="int" NOTNULL="false" LENGTH="11" />
                 <FIELD NAME="status" SEQUENCE="false" TYPE="int" NOTNULL="true" DEFAULT="0" LENGTH="11" />
                 <FIELD NAME="message" SEQUENCE="false" TYPE="text" NOTNULL="false" />
                 <FIELD NAME="course" SEQUENCE="false" TYPE="int" NOTNULL="true" DEFAULT="0" LENGTH="11" />
-                <FIELD NAME="country" SEQUENCE="false" TYPE="char" NOTNULL="true" DEFAULT="" LENGTH="255" />
-                <FIELD NAME="group" SEQUENCE="false" TYPE="int" NOTNULL="true" DEFAULT="0" LENGTH="11" />
-                <FIELD NAME="forum" SEQUENCE="false" TYPE="int" NOTNULL="true" DEFAULT="0" LENGTH="11" />
-                <FIELD NAME="starttime" SEQUENCE="false" TYPE="int" NOTNULL="true" DEFAULT="0" LENGTH="11" />
-                <FIELD NAME="endtime" SEQUENCE="false" TYPE="int" NOTNULL="true" DEFAULT="0" LENGTH="11" />
-                <FIELD NAME="engagementmethod" SEQUENCE="false" TYPE="int" NOTNULL="true" DEFAULT="0" LENGTH="11" />
-                <FIELD NAME="engagementinternational" SEQUENCE="false" TYPE="int" NOTNULL="true" DEFAULT="0" LENGTH="1" />
+                <FIELD NAME="country" SEQUENCE="false" TYPE="char" NOTNULL="false" LENGTH="255" />
+                <FIELD NAME="groupid" SEQUENCE="false" TYPE="int" NOTNULL="false" LENGTH="11" />
+                <FIELD NAME="forum" SEQUENCE="false" TYPE="int" NOTNULL="false" LENGTH="11" />
+                <FIELD NAME="starttime" SEQUENCE="false" TYPE="int" NOTNULL="false" LENGTH="11" />
+                <FIELD NAME="endtime" SEQUENCE="false" TYPE="int" NOTNULL="false" LENGTH="11" />
+                <FIELD NAME="engagementmethod" SEQUENCE="false" TYPE="int" NOTNULL="false" LENGTH="11" />
+                <FIELD NAME="engagementinternational" SEQUENCE="false" TYPE="int" NOTNULL="false" LENGTH="1" />
             </FIELDS>
             <KEYS>
                 <KEY NAME="primary" TYPE="primary" FIELDS="id" />
@@ -31,11 +32,11 @@
         <TABLE NAME="forum_report_results" COMMENT="Forum Report Results">
             <FIELDS>
                 <FIELD NAME="id" SEQUENCE="true" TYPE="int" NOTNULL="true" LENGTH="11" />
-                <FIELD NAME="report" SEQUENCE="false" TYPE="int" NOTNULL="true" />
+                <FIELD NAME="schedule" SEQUENCE="false" TYPE="int" NOTNULL="true" LENGTH="11" />
                 <FIELD NAME="username" SEQUENCE="false" TYPE="char" NOTNULL="false" LENGTH="255" />
                 <FIELD NAME="firstname" SEQUENCE="false" TYPE="char" NOTNULL="false" LENGTH="255" />
                 <FIELD NAME="lastname" SEQUENCE="false" TYPE="char" NOTNULL="false" LENGTH="255" />
-                <FIELD NAME="group" SEQUENCE="false" TYPE="char" NOTNULL="false" LENGTH="255" />
+                <FIELD NAME="groups" SEQUENCE="false" TYPE="char" NOTNULL="false" LENGTH="255" />
                 <FIELD NAME="country" SEQUENCE="false" TYPE="char" NOTNULL="false" LENGTH="255" />
                 <FIELD NAME="instituion" SEQUENCE="false" TYPE="char" NOTNULL="false" LENGTH="255" />
                 <FIELD NAME="posts" SEQUENCE="false" TYPE="int" NOTNULL="false" LENGTH="11" />
@@ -64,7 +65,7 @@
                 <KEY NAME="primary" TYPE="primary" FIELDS="id" />
             </KEYS>
             <INDEXES>
-                <INDEX NAME="report_idx" UNIQUE="false" FIELDS="report" />
+                <INDEX NAME="schedule_idx" UNIQUE="false" FIELDS="schedule" />
             </INDEXES>
         </TABLE>
     </TABLES>
