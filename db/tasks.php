@@ -6,7 +6,7 @@ $tasks = [
     [
         'classname' => 'block_forum_report\\task\\schedule_task',
         'blocking' => 0,
-        'minute' => '*',
+        'minute' => '0',
         'hour' => '*',
         'day' => '*',
         'month' => '*',
