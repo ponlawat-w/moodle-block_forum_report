@@ -9,6 +9,7 @@ const BLOCK_FORUM_REPORT_STATUS_SCHEDULED = 0;
 const BLOCK_FORUM_REPORT_STATUS_EXECUTING = 1;
 const BLOCK_FORUM_REPORT_STATUS_ERROR = 2;
 const BLOCK_FORUM_REPORT_STATUS_FINISH = 3;
+const BLOCK_FORUM_REPORT_STATUS_MANUAL = 4;
 
 /**
  * @var \moodle_database $DB
@@ -68,13 +69,35 @@ function block_forum_report_getnextscheduledtime() {
     return mktime($hrs[0] + 24, 0, 0, date('n', $lastexecution), date('j', $lastexecution), date('Y', $lastexecution));
 }
 
+function block_forum_report_getstatus(int $status) {
+    if ($status == BLOCK_FORUM_REPORT_STATUS_SCHEDULED) return [get_string('status_scheduled', 'block_forum_report'), ''];
+    if ($status == BLOCK_FORUM_REPORT_STATUS_EXECUTING) return [get_string('status_executing', 'block_forum_report'), 'text-primary'];
+    if ($status == BLOCK_FORUM_REPORT_STATUS_ERROR) return [get_string('status_error', 'block_forum_report'), 'text-danger'];
+    if ($status == BLOCK_FORUM_REPORT_STATUS_FINISH) return [get_string('status_finish', 'block_forum_report'), 'text-success'];
+    if ($status == BLOCK_FORUM_REPORT_STATUS_MANUAL) return [get_string('status_manual', 'block_forum_report'), 'text-secondary'];
+    return ['', ''];
+}
+
+function block_forum_report_getscheduledtime(stdClass $schedule) {
+    return $schedule->status == BLOCK_FORUM_REPORT_STATUS_SCHEDULED ? block_forum_report_getnextscheduledtime() : $schedule->processedtime;
+}
+
+function block_forum_report_getdownloadurl(stdClass $schedule) {
+    if ($schedule->status != BLOCK_FORUM_REPORT_STATUS_FINISH) return null;
+    return new moodle_url('/blocks/forum_report/view.php', ['id' => $schedule->id, 'action' => 'download']);
+}
+
+function block_forum_report_getdeleteurl(stdClass $schedule) {
+    return new moodle_url('/blocks/forum_report/schedule.php', ['sid' => $schedule->id, 'action' => 'delete']);
+}
+
 function block_forum_report_getreportscontext(int $userid) {
     global $DB;
     $reports = [];
 
     $records = $DB->get_records('forum_report_schedules', ['userid' => $userid], 'createdtime');
     foreach ($records as $record) {
-        $scheduledtime = $record->status == BLOCK_FORUM_REPORT_STATUS_SCHEDULED ? block_forum_report_getnextscheduledtime() : $record->processedtime;
+        $scheduledtime = block_forum_report_getscheduledtime($record);
 
         $report = [];
         $report['requestedtime'] = userdate($record->createdtime, get_string('strftimedaydatetime', 'langconfig'));
@@ -82,20 +105,12 @@ function block_forum_report_getreportscontext(int $userid) {
         $report['status'] = 0;
         $report['statusClass'] = '';
         $report['viewurl'] = new moodle_url('/blocks/forum_report/view.php', ['id' => $record->id]);
+        $report['downloadurl'] = block_forum_report_getdownloadurl($record);
+        $report['deleteurl'] = block_forum_report_getdeleteurl($record);
 
-        if ($record->status == BLOCK_FORUM_REPORT_STATUS_SCHEDULED) {
-            $report['status'] = get_string('status_scheduled', 'block_forum_report');
-            $report['statusClass'] = '';
-        } else if ($record->status == BLOCK_FORUM_REPORT_STATUS_EXECUTING) {
-            $report['status'] = get_string('status_executing', 'block_forum_report');
-            $report['statusClass'] = 'text-primary';
-        } else if ($record->status == BLOCK_FORUM_REPORT_STATUS_ERROR) {
-            $report['status'] = get_string('status_error', 'block_forum_report');
-            $report['statusClass'] = 'text-danger';
-        } else if ($record->status == BLOCK_FORUM_REPORT_STATUS_FINISH) {
-            $report['status'] = get_string('status_finish', 'block_forum_report');
-            $report['statusClass'] = 'text-success';
-        }
+        $status = block_forum_report_getstatus($record->status);
+        $report['status'] = $status[0];
+        $report['statusClass'] = $status[1];
 
         $reports[] = $report;
     }

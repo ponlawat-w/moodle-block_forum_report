@@ -36,7 +36,6 @@ if ($form->is_submitted()) {
 
 $PAGE->set_pagelayout('incourse');
 $PAGE->set_url(new moodle_url('/blocks/forum_report/schedule.php', ['course' => $course->id]));
-$PAGE->navbar->add('forum_report');
 $PAGE->set_heading($course->fullname);
 $PAGE->set_title(get_string('requestnewreport', 'block_forum_report'));
 

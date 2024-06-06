@@ -22,7 +22,11 @@
             <td>{{requestedtime}}</td>
             <td>{{scheduledtime}}</td>
             <td class="{{statusClass}}">{{status}}</td>
-            <td><a href="{{viewurl}}">{{#str}} view {{/str}}</a></td>
+            <td>
+                <a href="{{{viewurl}}}">{{#str}} view {{/str}}</a>
+                {{#downloadurl}}<a href="{{{downloadurl}}}" style="margin-left: 0.5em;">{{#str}} download {{/str}}</a>{{/downloadurl}}
+                <a href="{{{deleteurl}}}" style="margin-left: 0.5em;" class="text-danger">{{#str}} delete {{/str}}</a>
+            </td>
         </tr>
         {{/reports}}
         {{^reports}}

@@ -69,6 +69,10 @@ $string['status_scheduled'] = 'Scheduled';
 $string['status_executing'] = 'Running…';
 $string['status_error'] = 'Failed';
 $string['status_finish'] = 'Finished';
+$string['status_manual'] = 'Manual Run';
+
+$string['reportschedule'] = 'Report schedule';
+$string['createdby'] = 'Created by';
 
 //Reminder mail
 $string['remindsubject'] = 'Reminder to participate in the international exchange';
