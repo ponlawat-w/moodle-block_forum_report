@@ -32,7 +32,13 @@ function block_forum_report_removeexistingschedule(int $userid = 0) {
     }
 }
 
-function block_forum_report_addschedule(stdClass $formdata, int $userid = 0) {
+function block_forum_report_getblockcontext(\core\context\course $coursecontext) {
+    global $DB;
+    $block = $DB->get_record('block_instances', ['blockname' => 'forum_report', 'parentcontextid' => $coursecontext->id], '*', MUST_EXIST);
+    return \core\context\block::instance($block->id);
+}
+
+function block_forum_report_addschedule(stdClass $formdata, \core\context\block $blockcontext, int $userid = 0) {
     global $DB, $USER;
 
     $schedule = new stdClass();
@@ -48,7 +54,13 @@ function block_forum_report_addschedule(stdClass $formdata, int $userid = 0) {
     $schedule->engagementmethod = $formdata->engagementmethod ? $formdata->engagementmethod : null;
     $schedule->engagementinternational = $formdata->engagementinternational ? $formdata->engagementinternational : null;
 
-    return $DB->insert_record('forum_report_schedules', $schedule);
+    $schedule->id = $DB->insert_record('forum_report_schedules', $schedule);
+
+    if ($formdata->instant && has_capability('block/forum_report:getinstantreport', $blockcontext)) {
+        block_forum_report_executeschedule($schedule);
+    }
+
+    return $schedule->id;
 }
 
 function block_forum_report_getnextscheduledtime() {
@@ -88,7 +100,7 @@ function block_forum_report_getdownloadurl(stdClass $schedule) {
 }
 
 function block_forum_report_getdeleteurl(stdClass $schedule) {
-    return new moodle_url('/blocks/forum_report/schedule.php', ['sid' => $schedule->id, 'action' => 'delete']);
+    return new moodle_url('/blocks/forum_report/view.php', ['id' => $schedule->id, 'action' => 'delete']);
 }
 
 function block_forum_report_getreportscontext(int $userid) {
@@ -168,6 +180,7 @@ function block_forum_report_gettimecondition($fieldname, $starttime, $endtime, $
  * @return stdClass[]
  */
 function block_forum_report_getbasicreports(
+    $userid,
     $context,
     $courseid,
     $forumid = 0,
@@ -176,16 +189,34 @@ function block_forum_report_getbasicreports(
     $starttime = 0,
     $endtime = 0
 ) {
-    /** @var $DB \moodle_database */
     global $DB;
+
+    $coursecontext = \core\context\course::instance($courseid);
+    $blockcontext = block_forum_report_getblockcontext($coursecontext);
 
     $capacityjoin = get_with_capability_join($context, 'mod/forum:viewdiscussion', 'u.id');
     $params = $capacityjoin->params;
 
-    $groupjoin = $groupid ? 'JOIN' : 'LEFT OUTER JOIN';
-    $groupcondition = $groupid ? 'AND ug.id = :group' : '';
-    if ($groupid) {
-        $params['group'] = $groupid;
+    if (has_capability('block/forum_report:viewothergroups', $blockcontext, $userid)) {
+        $groupjoin = $groupid ? 'JOIN' : 'LEFT OUTER JOIN';
+        $groupcondition = $groupid ? 'AND ug.id = :group' : '';
+        if ($groupid) {
+            $params['group'] = $groupid;
+        }
+    } else {
+        $groupjoin = 'JOIN';
+        $mygroups = groups_get_user_groups($courseid, $userid);
+        $mygroupids = [];
+        foreach ($mygroups[0] as $mygroupid) $mygroupids[] = $mygroupid;
+
+        if (!count($mygroupids)) return [];
+        if ($groupid && !in_array($groupid, $mygroupids)) return [];
+
+        $querygroupids = $groupid ? [$groupid] : $mygroupids;
+        [$groupsql, $groupparams] = $DB->get_in_or_equal($querygroupids, SQL_PARAMS_NAMED, 'groupid_');
+
+        $groupcondition = 'AND ug.id ' . $groupsql;
+        $params = array_merge($params, $groupparams);
     }
 
     $countrycondition = (is_null($country) || !$country) ? '' : 'AND u.country = :country';
@@ -480,6 +511,37 @@ function block_forum_report_getreactionsreceived($userid, $courseid, $forumid, $
 
 function block_forum_report_executeschedule(stdClass $schedule) {
     global $DB;
+    try {
+        $schedule->status = BLOCK_FORUM_REPORT_STATUS_EXECUTING;
+        $schedule->processedtime = time();
+        $DB->update_record('forum_report_schedules', $schedule);
+
+        $DB->execute(<<<SQL
+            DELETE FROM {forum_report_results} WHERE schedule IN (
+                SELECT id FROM {forum_report_schedules} WHERE userid = ? AND createdtime < ?
+            )
+        SQL, [$schedule->userid, $schedule->createdtime]);
+        $DB->execute(<<<SQL
+            DELETE FROM {forum_report_schedules} WHERE userid = ? AND createdtime < ?
+        SQL, [$schedule->userid, $schedule->createdtime]);
+
+        block_forum_report_calculatereport($schedule);
+
+        $schedule->status = BLOCK_FORUM_REPORT_STATUS_FINISH;
+        $schedule->processedtime = time();
+        $DB->update_record('forum_report_schedules', $schedule);
+        return true;
+    } catch (\Throwable $ex) {
+        $schedule->status = BLOCK_FORUM_REPORT_STATUS_ERROR;
+        $schedule->message = $ex->getMessage();
+        $schedule->processedtime = time();
+        $DB->update_record('forum_report_schedules', $schedule);
+        return false;
+    }
+}
+
+function block_forum_report_calculatereport(stdClass $schedule) {
+    global $DB;
 
     $modcontextidlookup = block_forum_report_getforummodcontextidlookup($schedule->course);
 
@@ -490,6 +552,7 @@ function block_forum_report_executeschedule(stdClass $schedule) {
     }
 
     $students = block_forum_report_getbasicreports(
+        $schedule->userid,
         block_forum_report_getschedulecontext($schedule),
         $schedule->course,
         $schedule->forum,

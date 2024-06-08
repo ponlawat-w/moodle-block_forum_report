@@ -17,7 +17,8 @@ $course = $DB->get_record('course', ['id' => $courseid], '*', MUST_EXIST);
 require_login($course->id);
 
 $coursecontext = \core\context\course::instance($courseid);
-require_capability('block/forum_report:view', $coursecontext, NULL, true, 'noviewdiscussionpermissionm', 'forum');
+$blockcontext = block_forum_report_getblockcontext($coursecontext);
+require_capability('block/forum_report:view', $blockcontext, NULL, true, 'noviewdiscussionpermissionm', 'forum');
 
 $hasreportinqueue = $DB->count_records('forum_report_schedules', ['userid' => $USER->id, 'status' => BLOCK_FORUM_REPORT_STATUS_SCHEDULED]) > 0;
 $form = new schedule_form($course->id, !$hasreportinqueue);
@@ -29,7 +30,11 @@ if ($form->is_cancelled()) {
 if ($form->is_submitted()) {
     $data = $form->get_data();
     block_forum_report_removeexistingschedule();
-    block_forum_report_addschedule($data);
+    $scheduleid = block_forum_report_addschedule($data, $blockcontext);
+    if ($data->instant) {
+        redirect(new moodle_url('/blocks/forum_report/view.php', ['id' => $scheduleid]));
+        exit;
+    }
     redirect(new moodle_url('/blocks/forum_report/schedule.php', ['course' => $course->id]));
     exit;
 }

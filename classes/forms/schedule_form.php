@@ -2,7 +2,10 @@
 
 namespace block_forum_report\forms;
 
+defined('MOODLE_INTERNAL') or die();
+
 require_once(__DIR__ . '/../../../../lib/formslib.php');
+require_once(__DIR__ . '/../../lib.php');
 require_once(__DIR__ . '/../engagement.php');
 
 class schedule_form extends \moodleform
@@ -13,12 +16,9 @@ class schedule_form extends \moodleform
 
     public function __construct(int $courseid, bool $expanded = true)
     {
-        /** @var \moodle_database $DB */
-        global $DB;
         $this->courseid = $courseid;
         $contextcourse = \core\context\course::instance($this->courseid);
-        $block = $DB->get_record('block_instances', ['blockname' => 'forum_report', 'parentcontextid' => $contextcourse->id], '*', MUST_EXIST);
-        $this->contextblock = \core\context\block::instance($block->id);
+        $this->contextblock = block_forum_report_getblockcontext($contextcourse);
         $this->expanded = $expanded;
         parent::__construct();
     }
@@ -46,13 +46,14 @@ class schedule_form extends \moodleform
         if (has_capability('block/forum_report:viewothergroups', $this->contextblock)) {
             $allgroups = groups_get_all_groups($COURSE->id);
             if (count($allgroups)) {
-                $groupoptions = array('0' => get_string('allgroups'));
+                $groupoptions[0] = get_string('allgroups');
                 foreach ($allgroups as $group) {
                     $groupoptions[$group->id] = $group->name;
                 }
             }
         } else {
             $mygroups = groups_get_user_groups($this->courseid);
+            $groupoptions[0] = get_string('allmygroups', 'block_forum_report');
             foreach ($mygroups[0] as $mygroupid) {
                 $groupoptions[$mygroupid] = groups_get_group_name($mygroupid);
             }
@@ -74,6 +75,11 @@ class schedule_form extends \moodleform
         $mform->setDefault('endtime', null);
 
         \block_forum_report\engagement::addtoform($mform);
+
+        if (has_capability('block/forum_report:getinstantreport', $this->contextblock)) {
+            $mform->addElement('checkbox', 'instant', get_string('getinstantreport', 'block_forum_report'));
+            $mform->setDefault('instant', false);
+        }
 
         $mform->addElement('submit', 'submit', get_string('submit'));
     }

@@ -28,6 +28,7 @@ $string['executionschedule_help'] = 'Numbers of time in 24-hour format to execut
 
 $string['selectforum'] = 'Select forum';
 $string['alloncourse'] = 'All on this course';
+$string['allmygroups'] = 'All of my groups';
 $string['replies'] = 'Replies';
 $string['el1'] = '1st Engagement';
 $string['el2'] = '2nd Engagement';
@@ -56,6 +57,8 @@ $string['uniqueactive'] = 'Unique days active';
 $string['perpage'] = 'No. of records per page';
 //BL Customized Code <<--
 
+$string['getinstantreport'] = 'Get instant report result (with out being scheduled)';
+
 $string['requestnewreport'] = 'Request a new report';
 $string['myrequestedreports'] = 'My Requested Reports';
 $string['requestedtime'] = 'Requested Time';
@@ -73,6 +76,7 @@ $string['status_manual'] = 'Manual Run';
 
 $string['reportschedule'] = 'Report schedule';
 $string['createdby'] = 'Created by';
+$string['emptyresults'] = 'This report request has no reults. Please try again with a different configuration.';
 
 //Reminder mail
 $string['remindsubject'] = 'Reminder to participate in the international exchange';
@@ -83,6 +87,10 @@ $string['forum_report:sendreminder'] = 'Send reminder';
 $string['forum_report:addinstance'] = 'Add a new forum report block';
 $string['forum_report:view'] = 'View forum report';
 $string['forum_report:viewothergroups'] = 'View forum report of users from other groups';
+$string['forum_report:getinstantreport'] = 'Get report results instantly without being scheduled';
+
+$string['deleteconfirmation_title'] = 'Report Delete Confirmation';
+$string['deleteconfirmation_description'] = 'Are you sure you want to delete this report?';
 
 $string['engagement_method'] = 'Engagement method';
 $string['engagement_method_help'] = '<p>Engagement Calculation Method</p><strong>Person-to-Person Engagement:</strong> The engagement level increases each time a user replies to the same user in the same thread.<br><strong>Thread Total Count Engagement:</strong> The engagement level increases each time a user participate in the same thread.<br><strong>Thread Engagement:</strong> The engagement level increases each time a user participates in a reply where they already participated in the parent posts.';
