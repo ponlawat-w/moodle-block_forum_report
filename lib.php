@@ -446,8 +446,8 @@ function block_forum_report_getreactionsgiven($userid, $courseid, $forumid, $sta
     $params = [
         'userid' => $userid,
         'courseid' => $courseid,
-        'forumid1' => $forumid,
-        'forumid2' => $forumid
+        'forumid1' => $forumid ? $forumid : 0,
+        'forumid2' => $forumid ? $forumid : 0
     ];
     if ($starttime) $params['starttime'] = $starttime;
     if ($endtime) $params['endtime'] = $endtime;
@@ -470,8 +470,8 @@ function block_forum_report_getreactionsreceived($userid, $courseid, $forumid, $
     $params = [
         'userid' => $userid,
         'courseid' => $courseid,
-        'forumid1' => $forumid,
-        'forumid2' => $forumid
+        'forumid1' => $forumid ? $forumid : 0,
+        'forumid2' => $forumid ? $forumid : 0
     ];
     if ($starttime) $params['starttime'] = $starttime;
     if ($endtime) $params['endtime'] = $endtime;
@@ -508,7 +508,7 @@ function block_forum_report_executeschedule(stdClass $schedule) {
         $result->lastname = $student->lastname;
         $result->groups = $student->groupnames;
         $result->country = $student->country;
-        $result->instituion = $student->instituion;
+        $result->institution = $student->institution;
         $result->posts = $student->posts;
         $result->replies = $student->replies;
         $result->uniquedaysactive = $student->unique_activedays;
@@ -551,4 +551,73 @@ function block_forum_report_executeschedule(stdClass $schedule) {
         $results[] = $result;
     }
     $DB->insert_records('forum_report_results', $results);
+}
+
+function block_forum_report_getresultsheader() {
+    return [
+        get_string('username'),
+        get_string('firstname'),
+        get_string('lastname'),
+        get_string('group'),
+        get_string('country'),
+        get_string('institution'),
+        get_string('posts'),
+        get_string('replies', 'block_forum_report'),
+        get_string('uniqueactive', 'block_forum_report'),
+        get_string('views', 'block_forum_report'),
+        get_string('uniqueview', 'block_forum_report'),
+        get_string('wordcount', 'block_forum_report'),
+        get_string('multimedia', 'block_forum_report'),
+        get_string('multimedia_image', 'block_forum_report'),
+        get_string('multimedia_video', 'block_forum_report'),
+        get_string('multimedia_audio', 'block_forum_report'),
+        get_string('multimedia_link', 'block_forum_report'),
+        get_string('el1', 'block_forum_report'),
+        get_string('el2', 'block_forum_report'),
+        get_string('el3', 'block_forum_report'),
+        get_string('el4up', 'block_forum_report'),
+        get_string('elavg', 'block_forum_report'),
+        get_string('elmax', 'block_forum_report'),
+        get_string('firstpost', 'block_forum_report'),
+        get_string('lastpost', 'block_forum_report'),
+        get_string('reactionsreceived', 'block_forum_report'),
+        get_string('reactionsgiven', 'block_forum_report')
+    ];
+}
+
+$_countries = [];
+function block_forum_report_getresultsrow($record) {
+    global $_countries;
+
+    if (!count($_countries)) $_countries = get_string_manager()->get_list_of_countries();
+
+    return [
+        $record->username,
+        $record->firstname,
+        $record->lastname,
+        $record->groups,
+        $_countries[$record->country],
+        $record->institution,
+        $record->posts,
+        $record->replies,
+        $record->uniquedaysactive,
+        $record->views,
+        $record->uniquedaysviewed,
+        $record->wordcount,
+        $record->multimedia,
+        $record->images,
+        $record->videos,
+        $record->audios,
+        $record->links,
+        $record->engagement1,
+        $record->engagement2,
+        $record->engagement3,
+        $record->engagement4,
+        $record->averageengagement,
+        $record->maximumengagement,
+        $record->firstpost ? userdate($record->firstpost, get_string('strftimedatetimeshortaccurate', 'langconfig')) : '',
+        $record->lastpost ? userdate($record->lastpost, get_string('strftimedatetimeshortaccurate', 'langconfig')) : '',
+        $record->reactionsgiven,
+        $record->reactionsreceived
+    ];
 }

@@ -23,6 +23,25 @@ require_capability('block/forum_report:view', $coursecontext, NULL, true, 'novie
 
 if ($USER->id != $schedule->userid) throw new \moodle_exception('You don\'t have permission to view this report');
 
+if ($action === 'download') {
+    if ($schedule->status != BLOCK_FORUM_REPORT_STATUS_FINISH) {
+        throw new \moodle_exception('This report is not ready for download');
+    }
+    require_once(__DIR__ . '/../../lib/csvlib.class.php');
+    $csv = new \csv_export_writer();
+    $csv->set_filename('forum_report');
+    $csv->add_data(block_forum_report_getresultsheader());
+    $results = $DB->get_records('forum_report_results', ['schedule' => $schedule->id]);
+    foreach ($results as $result) {
+        $csv->add_data(block_forum_report_getresultsrow($result));
+    }
+    $csv->download_file();
+    exit;
+}
+if ($action !== 'view') {
+    throw new \moodle_exception('Invalid action');
+}
+
 $PAGE->set_pagelayout('incourse');
 $PAGE->set_url(new moodle_url('/blocks/forum_report/view.php', ['id' => $schedule->id]));
 $PAGE->navbar->add(
@@ -56,5 +75,16 @@ echo $OUTPUT->render_from_template('block_forum_report/scheduleinfo', [
     'downloadurl' => block_forum_report_getdownloadurl($schedule),
     'deleteurl' => block_forum_report_getdeleteurl($schedule)
 ]);
+
+if ($schedule->status == BLOCK_FORUM_REPORT_STATUS_FINISH) {
+    $results = $DB->get_records('forum_report_results', ['schedule' => $schedule->id]);
+    $rows = [];
+    foreach ($results as $result) $rows[] = block_forum_report_getresultsrow($result);
+
+    echo $OUTPUT->render_from_template('block_forum_report/results', [
+        'headers' => block_forum_report_getresultsheader(),
+        'rows' => $rows
+    ]);
+}
 
 echo $OUTPUT->footer();

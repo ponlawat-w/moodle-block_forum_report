@@ -38,7 +38,7 @@
                 <FIELD NAME="lastname" SEQUENCE="false" TYPE="char" NOTNULL="false" LENGTH="255" />
                 <FIELD NAME="groups" SEQUENCE="false" TYPE="char" NOTNULL="false" LENGTH="255" />
                 <FIELD NAME="country" SEQUENCE="false" TYPE="char" NOTNULL="false" LENGTH="255" />
-                <FIELD NAME="instituion" SEQUENCE="false" TYPE="char" NOTNULL="false" LENGTH="255" />
+                <FIELD NAME="institution" SEQUENCE="false" TYPE="char" NOTNULL="false" LENGTH="255" />
                 <FIELD NAME="posts" SEQUENCE="false" TYPE="int" NOTNULL="false" LENGTH="11" />
                 <FIELD NAME="replies" SEQUENCE="false" TYPE="int" NOTNULL="false" LENGTH="11" />
                 <FIELD NAME="uniquedaysactive" SEQUENCE="false" TYPE="int" NOTNULL="false" LENGTH="11" />
