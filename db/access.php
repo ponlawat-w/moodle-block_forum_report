@@ -70,5 +70,12 @@ $capabilities = array(
         'archetypes' => array(
             'manager' => CAP_ALLOW
         )
-    )
+    ),
+
+    'block/forum_report:getinstantreport' => [
+        'riskbitmask' => 0,
+        'captype' => 'read',
+        'contextlevel' => CONTEXT_BLOCK,
+        'archetypes' => []
+    ]
 );

@@ -28,6 +28,13 @@ defined('MOODLE_INTERNAL') || die();
 require_once(__DIR__ . '/classes/engagement.php');
 
 if ($ADMIN->fulltree) {
+    $settings->add(new admin_setting_configtext(
+        'block_forum_report/executionschedule',
+        get_string('executionschedule', 'block_forum_report'),
+        get_string('executionschedule_help', 'block_forum_report'),
+        '4, 10, 16, 22'
+    ));
+
     $settings->add(new admin_setting_configselect(
         'block_forum_report/defaultengagementmethod',
         get_string('engagement_admin_defaultmethod', 'block_forum_report'),

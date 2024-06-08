@@ -1,0 +1,27 @@
+<hr>
+<div style="width: 100%; overflow-x: scroll;">
+    {{#empty}}
+        <div class="alert alert-warning">
+            <i class="fa fa-warning"></i>
+            {{#str}} emptyresults, block_forum_report {{/str}}
+        </div>
+    {{/empty}}
+    {{^empty}}
+        <table class="table table-sm table-bordered table-hover">
+            <thead>
+                <tr class="bg-primary text-white">
+                    {{#headers}}<th>{{.}}</th>{{/headers}}
+                </tr>
+            </thead>
+            <tbody>
+                {{#rows}}
+                    <tr>
+                        {{#.}}
+                            <td>{{.}}</td>
+                        {{/.}}
+                    </tr>
+                {{/rows}}
+            </tbody>
+        </table>
+    {{/empty}}
+</div>

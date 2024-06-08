@@ -1,0 +1,63 @@
+<table class="table table-sm table-hover table-bordered">
+    <tr>
+        <th class="bg-secondary" style="width: 320px;">{{#str}} createdby, block_forum_report {{/str}}</th>
+        <td>{{ createdby }}</td>
+    </tr>
+    <tr>
+        <th class="bg-secondary">{{#str}} requestedtime, block_forum_report {{/str}}</th>
+        <td>{{ requestedtime }}</td>
+    </tr>
+    <tr>
+        <th class="bg-secondary">{{#str}} scheduledtime, block_forum_report {{/str}}</th>
+        <td>{{ scheduledtime }}</td>
+    </tr>
+    <tr>
+        <th class="bg-secondary">{{#str}} status, block_forum_report {{/str}}</th>
+        <td class="{{statusclass}}">{{ status }}</td>
+    </tr>
+    {{#message}}
+        <tr>
+            <th class="bg-secondary">{{#str}} message, block_forum_report {{/str}}</th>
+            <td>{{ message }}</td>
+        </tr>
+    {{/message}}
+    <tr>
+        <th class="bg-secondary">{{#str}} country {{/str}}</th>
+        <td>{{ country }}</td>
+    </tr>
+    <tr>
+        <th class="bg-secondary">{{#str}} group {{/str}}</th>
+        <td>{{ group }}</td>
+    </tr>
+    <tr>
+        <th class="bg-secondary">{{#str}} forum, mod_forum {{/str}}</th>
+        <td>{{ forum }}</td>
+    </tr>
+    <tr>
+        <th class="bg-secondary">{{#str}} reportstart, block_forum_report {{/str}}</th>
+        <td>{{ starttime }}</td>
+    </tr>
+    <tr>
+        <th class="bg-secondary">{{#str}} reportend, block_forum_report {{/str}}</th>
+        <td>{{ endtime }}</td>
+    </tr>
+    <tr>
+        <th class="bg-secondary">{{#str}} engagement_method, block_forum_report {{/str}}</th>
+        <td>{{ engagementmethod }}</td>
+    </tr>
+    <tr>
+        <th class="bg-secondary">{{#str}} engagement_international, block_forum_report {{/str}}</th>
+        <td>{{ engagementinternational }}</td>
+    </tr>
+</table>
+
+{{#downloadurl}}
+    <a href="{{{downloadurl}}}" class="btn btn-primary">
+        <i class="fa fa-download"></i>
+        {{#str}} download {{/str}}
+    </a>
+{{/downloadurl}}
+<a href="{{{deleteurl}}}" class="btn btn-danger">
+    <i class="fa fa-trash"></i>
+    {{#str}} delete {{/str}}
+</a>
