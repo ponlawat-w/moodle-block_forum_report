@@ -92,7 +92,14 @@ if ($action === 'view') {
     if ($schedule->status == BLOCK_FORUM_REPORT_STATUS_FINISH) {
         $results = $DB->get_records('forum_report_results', ['schedule' => $schedule->id]);
         $rows = [];
-        foreach ($results as $result) $rows[] = block_forum_report_getresultsrow($result);
+        foreach ($results as $result) $rows[] = [
+            'records' => block_forum_report_getresultsrow($result),
+            'reporturl' => new moodle_url('/report/outline/user.php', [
+                'id' => $result->userid,
+                'course' => $schedule->course,
+                'mode' => 'complete'
+            ])
+        ];
     
         echo $OUTPUT->render_from_template('block_forum_report/results', [
             'headers' => block_forum_report_getresultsheader(),

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="blocks/forum_report/db" VERSION="2024060201" COMMENT="XMLDB file for Forum Report Block"
+<XMLDB PATH="blocks/forum_report/db" VERSION="2024061100" COMMENT="XMLDB file for Forum Report Block"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
 >
@@ -33,6 +33,7 @@
             <FIELDS>
                 <FIELD NAME="id" SEQUENCE="true" TYPE="int" NOTNULL="true" LENGTH="11" />
                 <FIELD NAME="schedule" SEQUENCE="false" TYPE="int" NOTNULL="true" LENGTH="11" />
+                <FIELD NAME="userid" SEQUENCE="false" TYPE="char" NOTNULL="false" LENGTH="255" />
                 <FIELD NAME="username" SEQUENCE="false" TYPE="char" NOTNULL="false" LENGTH="255" />
                 <FIELD NAME="firstname" SEQUENCE="false" TYPE="char" NOTNULL="false" LENGTH="255" />
                 <FIELD NAME="lastname" SEQUENCE="false" TYPE="char" NOTNULL="false" LENGTH="255" />

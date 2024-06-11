@@ -56,6 +56,7 @@ $string['uniqueview'] = 'Unique days viewed';
 $string['uniqueactive'] = 'Unique days active';
 $string['perpage'] = 'No. of records per page';
 //BL Customized Code <<--
+$string['viewcompletereport'] = 'View Complete Report';
 
 $string['getinstantreport'] = 'Get instant report result (with out being scheduled)';
 

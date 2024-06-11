@@ -11,14 +11,20 @@
             <thead>
                 <tr class="bg-primary text-white">
                     {{#headers}}<th>{{.}}</th>{{/headers}}
+                    <th>{{#str}} action {{/str}}</th>
                 </tr>
             </thead>
             <tbody>
                 {{#rows}}
                     <tr>
-                        {{#.}}
+                        {{#records}}
                             <td>{{.}}</td>
-                        {{/.}}
+                        {{/records}}
+                        <td>
+                            <a href="{{{reporturl}}}" title="{{#str}} viewcompletereport, block_forum_report {{/str}}">
+                                {{#str}} view {{/str}}
+                            </a>
+                        </td>
                     </tr>
                 {{/rows}}
             </tbody>

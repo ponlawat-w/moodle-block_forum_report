@@ -566,6 +566,7 @@ function block_forum_report_calculatereport(stdClass $schedule) {
     foreach ($students as $student) {
         $result = new stdClass();
         $result->schedule = $schedule->id;
+        $result->userid = $student->id;
         $result->username = $student->username;
         $result->firstname = $student->firstname;
         $result->lastname = $student->lastname;
