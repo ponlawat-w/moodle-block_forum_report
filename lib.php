@@ -337,49 +337,64 @@ function block_forum_report_get_mulutimedia_num($text)
 {
     global $CFG, $PAGE;
 
-    if (!is_string($text) or empty($text)) {
-        // non string data can not be filtered anyway
-        return 0;
-    }
-
-    if (stripos($text, '</a>') === false && stripos($text, '</video>') === false && stripos($text, '</audio>') === false && (stripos($text, '<img') === false)) {
-        // Performance shortcut - if there are no </a>, </video> or </audio> tags, nothing can match.
-        return 0;
-    }
-
-    // Looking for tags.
-    $matches = preg_split('/(<[^>]*>)/i', $text, -1, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE);
     $count = new stdClass();
     $count->num = 0;
     $count->img = 0;
     $count->video = 0;
     $count->audio = 0;
     $count->link = 0;
+
+    if (!is_string($text) or empty($text)) {
+        // non string data can not be filtered anyway
+        return $count;
+    }
+
+    if (stripos($text, '</a>') === false && stripos($text, '</video>') === false && stripos($text, '</audio>') === false && (stripos($text, '<img') === false)) {
+        // Performance shortcut - if there are no </a>, </video> or </audio> tags, nothing can match.
+        return $count;
+    }
+
+    // Looking for tags.
+    $matches = preg_split('/(<[^>]*>)/i', $text, -1, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE);
     if (!$matches) {
-        return 0;
+        return $count;
     } else {
         // Regex to find media extensions in an <a> tag.
         $embedmarkers = core_media_manager::instance()->get_embeddable_markers();
-        $re = '~<a\s[^>]*href="([^"]*(?:' .  $embedmarkers . ')[^"]*)"[^>]*>([^>]*)</a>~is';
 
         $tagname = '';
         foreach ($matches as $idx => $tag) {
             if (preg_match('/<(a|img|video|audio)\s[^>]*/', $tag, $tagmatches)) {
                 $tagname = strtolower($tagmatches[1]);
-                if ($tagname === "a" && preg_match($re, $tag)) {
-                    $count->num++;
-                    $count->link++;
-                } else {
-                    if ($tagname == "img") {
-                        $count->img++;
-                        $count->num++;
-                    } else if ($tagname == "video") {
+                if ($tagname === "a") {
+                    preg_match("<a\\s+href=\".*({$embedmarkers}).*\".*>", $tag, $embedmarkermatch);
+                    $embed = $embedmarkermatch[1] ? $embedmarkermatch[1] : null;
+                    if (
+                        $embed == '.fmp4' || $embed == '.mov' || $embed == '.mp4' || $embed == '.m4v' || $embed == '.ogv' || $embed == '.webm'
+                        || $embed == 'youtube.com' || $embed == 'youtube-nocookie.com' || $embed == 'youtu.be' || $embed == 'y2u.be'
+                        || $embed == 'youtube.com' || $embed == 'youtube-nocookie.com' || $embed == 'youtu.be' || $embed == 'y2u.be'
+                    ) {
                         $count->video++;
                         $count->num++;
-                    } else if ($tagname == "audio") {
+                    } else if (
+                        $embed == '.m3u8' || $embed == '.mpd' || $embed == '.aac' || $embed == '.flac' || $embed == '.mp3'
+                        || $embed == '.m4a' || $embed == '.oga' || $embed == '.ogg' || $embed == '.wav'
+                    ) {
                         $count->audio++;
                         $count->num++;
+                    } else {
+                        $count->link++;
+                        $count->num++;
                     }
+                } else if ($tagname == "img") {
+                    $count->img++;
+                    $count->num++;
+                } else if ($tagname == "video") {
+                    $count->video++;
+                    $count->num++;
+                } else if ($tagname == "audio") {
+                    $count->audio++;
+                    $count->num++;
                 }
             }
         }
@@ -427,12 +442,11 @@ function block_forum_report_countwordmultimedia(
     $params = [
         'userid' => $userid,
         'courseid' => $courseid,
-        'forumid1' => $forumid,
-        'forumid2' => $forumid,
+        'forumid1' => $forumid ? $forumid : 0,
+        'forumid2' => $forumid ? $forumid : 0,
         'contextlevel' => \core\context\module::LEVEL
     ];
     if ($starttime) $params['starttime'] = $starttime;
-    if ($endtime) $params['endtime'] = $endtime;
     $posts = $DB->get_records_sql($sql, $params);
     foreach ($posts as $post) {
         $multimedia = block_forum_report_get_mulutimedia_num($post->message);
@@ -619,34 +633,52 @@ function block_forum_report_calculatereport(stdClass $schedule) {
 
 function block_forum_report_getresultsheader() {
     return [
-        get_string('username'),
-        get_string('firstname'),
-        get_string('lastname'),
-        get_string('group'),
-        get_string('country'),
-        get_string('institution'),
-        get_string('posts'),
-        get_string('replies', 'block_forum_report'),
-        get_string('uniqueactive', 'block_forum_report'),
-        get_string('views', 'block_forum_report'),
-        get_string('uniqueview', 'block_forum_report'),
-        get_string('wordcount', 'block_forum_report'),
-        get_string('multimedia', 'block_forum_report'),
-        get_string('multimedia_image', 'block_forum_report'),
-        get_string('multimedia_video', 'block_forum_report'),
-        get_string('multimedia_audio', 'block_forum_report'),
-        get_string('multimedia_link', 'block_forum_report'),
-        get_string('el1', 'block_forum_report'),
-        get_string('el2', 'block_forum_report'),
-        get_string('el3', 'block_forum_report'),
-        get_string('el4up', 'block_forum_report'),
-        get_string('elavg', 'block_forum_report'),
-        get_string('elmax', 'block_forum_report'),
-        get_string('firstpost', 'block_forum_report'),
-        get_string('lastpost', 'block_forum_report'),
-        get_string('reactionsreceived', 'block_forum_report'),
-        get_string('reactionsgiven', 'block_forum_report')
+        'username' => get_string('username'),
+        'firstname' => get_string('firstname'),
+        'lastname' => get_string('lastname'),
+        'groups' => get_string('group'),
+        'country' => get_string('country'),
+        'institution' => get_string('institution'),
+        'posts' => get_string('posts'),
+        'replies' => get_string('replies', 'block_forum_report'),
+        'uniquedaysactive' => get_string('uniqueactive', 'block_forum_report'),
+        'views' => get_string('views', 'block_forum_report'),
+        'uniquedaysviewed' => get_string('uniqueview', 'block_forum_report'),
+        'wordcount' => get_string('wordcount', 'block_forum_report'),
+        'multimedia' => get_string('multimedia', 'block_forum_report'),
+        'images' => get_string('multimedia_image', 'block_forum_report'),
+        'videos' => get_string('multimedia_video', 'block_forum_report'),
+        'audios' => get_string('multimedia_audio', 'block_forum_report'),
+        'links' => get_string('multimedia_link', 'block_forum_report'),
+        'engagement1' => get_string('el1', 'block_forum_report'),
+        'engagement2' => get_string('el2', 'block_forum_report'),
+        'engagement3' => get_string('el3', 'block_forum_report'),
+        'engagement4' => get_string('el4up', 'block_forum_report'),
+        'averageengagement' => get_string('elavg', 'block_forum_report'),
+        'maximumengagement' => get_string('elmax', 'block_forum_report'),
+        'firstpost' => get_string('firstpost', 'block_forum_report'),
+        'lastpost' => get_string('lastpost', 'block_forum_report'),
+        'reactionsgiven' => get_string('reactionsreceived', 'block_forum_report'),
+        'reactionsreceived' => get_string('reactionsgiven', 'block_forum_report')
     ];
+}
+
+function block_forum_report_getresultsheadercontext($scheduleid, $sortname = 'userid', $sorttype = 'asc') {
+  $sorttype = strtolower($sorttype);
+  $differentsorttype = $sorttype == 'asc' ? 'desc' : 'asc';
+  $items = [];
+  foreach (block_forum_report_getresultsheader() as $fieldname => $title) {
+    $items[] = [
+      'name' => $title,
+      'sorturl' => new \moodle_url(
+        '/blocks/forum_report/view.php',
+        ['id' => $scheduleid, 'sn' => $fieldname, 'sd' => $sortname === $fieldname ? $differentsorttype : 'asc'],
+        'results'
+      ),
+      'icon' => $sortname == $fieldname ? ($sorttype == 'desc' ? 'fa-caret-down' : 'fa-caret-up') : null
+    ];
+  }
+  return $items;
 }
 
 $_countries = [];
@@ -684,4 +716,40 @@ function block_forum_report_getresultsrow($record) {
         $record->reactionsgiven,
         $record->reactionsreceived
     ];
+}
+
+function block_forum_report_getsort($sortname, $sorttype) {
+  if (
+    !$sortname || (
+      $sortname != 'username'
+      && $sortname != 'firstname'
+      && $sortname != 'lastname'
+      && $sortname != 'groups'
+      && $sortname != 'country'
+      && $sortname != 'institution'
+      && $sortname != 'posts'
+      && $sortname != 'replies'
+      && $sortname != 'uniquedaysactive'
+      && $sortname != 'views'
+      && $sortname != 'uniquedaysviewed'
+      && $sortname != 'wordcount'
+      && $sortname != 'multimedia'
+      && $sortname != 'images'
+      && $sortname != 'videos'
+      && $sortname != 'audios'
+      && $sortname != 'links'
+      && $sortname != 'engagement1'
+      && $sortname != 'engagement2'
+      && $sortname != 'engagement3'
+      && $sortname != 'engagement4'
+      && $sortname != 'averageengagement'
+      && $sortname != 'maximumengagement'
+      && $sortname != 'firstpost'
+      && $sortname != 'lastpost'
+      && $sortname != 'reactionsgiven'
+      && $sortname != 'reactionsreceived'
+    )
+  ) return 'userid ASC';
+  if (strtolower($sorttype) != 'asc' && strtolower($sorttype) != 'desc') $sorttype = 'ASC';
+  return "{$sortname} {$sorttype}";
 }

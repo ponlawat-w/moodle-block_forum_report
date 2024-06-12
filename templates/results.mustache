@@ -7,11 +7,21 @@
         </div>
     {{/empty}}
     {{^empty}}
+        <a id="results">
         <table class="table table-sm table-bordered table-hover">
             <thead>
                 <tr class="bg-primary text-white">
-                    {{#headers}}<th>{{.}}</th>{{/headers}}
-                    <th>{{#str}} action {{/str}}</th>
+                    {{#headers}}
+                        <th>
+                            <a href="{{{sorturl}}}" class="text-white">
+                                {{name}}
+                                {{#icon}}
+                                    <i class="fa {{icon}}"></i>
+                                {{/icon}}
+                            </a>
+                        </th>
+                    {{/headers}}
+                    <th>{{#str}} completereport, block_forum_report {{/str}}</th>
                 </tr>
             </thead>
             <tbody>
@@ -21,7 +31,7 @@
                             <td>{{.}}</td>
                         {{/records}}
                         <td>
-                            <a href="{{{reporturl}}}" title="{{#str}} viewcompletereport, block_forum_report {{/str}}">
+                            <a href="{{{reporturl}}}" target="_blank">
                                 {{#str}} view {{/str}}
                             </a>
                         </td>
