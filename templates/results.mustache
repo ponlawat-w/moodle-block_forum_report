@@ -11,7 +11,7 @@
             <thead>
                 <tr class="bg-primary text-white">
                     {{#headers}}<th>{{.}}</th>{{/headers}}
-                    <th>{{#str}} action {{/str}}</th>
+                    <th>{{#str}} completereport, block_forum_report {{/str}}</th>
                 </tr>
             </thead>
             <tbody>
@@ -21,7 +21,7 @@
                             <td>{{.}}</td>
                         {{/records}}
                         <td>
-                            <a href="{{{reporturl}}}" title="{{#str}} viewcompletereport, block_forum_report {{/str}}">
+                            <a href="{{{reporturl}}}" target="_blank">
                                 {{#str}} view {{/str}}
                             </a>
                         </td>
