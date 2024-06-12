@@ -90,7 +90,13 @@ if ($action === 'view') {
     ]);
     
     if ($schedule->status == BLOCK_FORUM_REPORT_STATUS_FINISH) {
-        $results = $DB->get_records('forum_report_results', ['schedule' => $schedule->id]);
+        $sortname = optional_param('sn', null, PARAM_TEXT);
+        $sorttype = optional_param('sd', 'ASC', PARAM_TEXT);
+        $sort = block_forum_report_getsort(
+            $sortname,
+            $sorttype
+        );
+        $results = $DB->get_records('forum_report_results', ['schedule' => $schedule->id], $sort);
         $rows = [];
         foreach ($results as $result) $rows[] = [
             'records' => block_forum_report_getresultsrow($result),
@@ -102,7 +108,7 @@ if ($action === 'view') {
         ];
     
         echo $OUTPUT->render_from_template('block_forum_report/results', [
-            'headers' => block_forum_report_getresultsheader(),
+            'headers' => block_forum_report_getresultsheadercontext($schedule->id, $sortname, $sorttype),
             'rows' => $rows,
             'empty' => count($rows) === 0
         ]);

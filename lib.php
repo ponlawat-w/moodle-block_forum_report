@@ -633,34 +633,52 @@ function block_forum_report_calculatereport(stdClass $schedule) {
 
 function block_forum_report_getresultsheader() {
     return [
-        get_string('username'),
-        get_string('firstname'),
-        get_string('lastname'),
-        get_string('group'),
-        get_string('country'),
-        get_string('institution'),
-        get_string('posts'),
-        get_string('replies', 'block_forum_report'),
-        get_string('uniqueactive', 'block_forum_report'),
-        get_string('views', 'block_forum_report'),
-        get_string('uniqueview', 'block_forum_report'),
-        get_string('wordcount', 'block_forum_report'),
-        get_string('multimedia', 'block_forum_report'),
-        get_string('multimedia_image', 'block_forum_report'),
-        get_string('multimedia_video', 'block_forum_report'),
-        get_string('multimedia_audio', 'block_forum_report'),
-        get_string('multimedia_link', 'block_forum_report'),
-        get_string('el1', 'block_forum_report'),
-        get_string('el2', 'block_forum_report'),
-        get_string('el3', 'block_forum_report'),
-        get_string('el4up', 'block_forum_report'),
-        get_string('elavg', 'block_forum_report'),
-        get_string('elmax', 'block_forum_report'),
-        get_string('firstpost', 'block_forum_report'),
-        get_string('lastpost', 'block_forum_report'),
-        get_string('reactionsreceived', 'block_forum_report'),
-        get_string('reactionsgiven', 'block_forum_report')
+        'username' => get_string('username'),
+        'firstname' => get_string('firstname'),
+        'lastname' => get_string('lastname'),
+        'groups' => get_string('group'),
+        'country' => get_string('country'),
+        'institution' => get_string('institution'),
+        'posts' => get_string('posts'),
+        'replies' => get_string('replies', 'block_forum_report'),
+        'uniquedaysactive' => get_string('uniqueactive', 'block_forum_report'),
+        'views' => get_string('views', 'block_forum_report'),
+        'uniquedaysviewed' => get_string('uniqueview', 'block_forum_report'),
+        'wordcount' => get_string('wordcount', 'block_forum_report'),
+        'multimedia' => get_string('multimedia', 'block_forum_report'),
+        'images' => get_string('multimedia_image', 'block_forum_report'),
+        'videos' => get_string('multimedia_video', 'block_forum_report'),
+        'audios' => get_string('multimedia_audio', 'block_forum_report'),
+        'links' => get_string('multimedia_link', 'block_forum_report'),
+        'engagement1' => get_string('el1', 'block_forum_report'),
+        'engagement2' => get_string('el2', 'block_forum_report'),
+        'engagement3' => get_string('el3', 'block_forum_report'),
+        'engagement4' => get_string('el4up', 'block_forum_report'),
+        'averageengagement' => get_string('elavg', 'block_forum_report'),
+        'maximumengagement' => get_string('elmax', 'block_forum_report'),
+        'firstpost' => get_string('firstpost', 'block_forum_report'),
+        'lastpost' => get_string('lastpost', 'block_forum_report'),
+        'reactionsgiven' => get_string('reactionsreceived', 'block_forum_report'),
+        'reactionsreceived' => get_string('reactionsgiven', 'block_forum_report')
     ];
+}
+
+function block_forum_report_getresultsheadercontext($scheduleid, $sortname = 'userid', $sorttype = 'asc') {
+  $sorttype = strtolower($sorttype);
+  $differentsorttype = $sorttype == 'asc' ? 'desc' : 'asc';
+  $items = [];
+  foreach (block_forum_report_getresultsheader() as $fieldname => $title) {
+    $items[] = [
+      'name' => $title,
+      'sorturl' => new \moodle_url(
+        '/blocks/forum_report/view.php',
+        ['id' => $scheduleid, 'sn' => $fieldname, 'sd' => $sortname === $fieldname ? $differentsorttype : 'asc'],
+        'results'
+      ),
+      'icon' => $sortname == $fieldname ? ($sorttype == 'desc' ? 'fa-caret-down' : 'fa-caret-up') : null
+    ];
+  }
+  return $items;
 }
 
 $_countries = [];
@@ -698,4 +716,40 @@ function block_forum_report_getresultsrow($record) {
         $record->reactionsgiven,
         $record->reactionsreceived
     ];
+}
+
+function block_forum_report_getsort($sortname, $sorttype) {
+  if (
+    !$sortname || (
+      $sortname != 'username'
+      && $sortname != 'firstname'
+      && $sortname != 'lastname'
+      && $sortname != 'groups'
+      && $sortname != 'country'
+      && $sortname != 'institution'
+      && $sortname != 'posts'
+      && $sortname != 'replies'
+      && $sortname != 'uniquedaysactive'
+      && $sortname != 'views'
+      && $sortname != 'uniquedaysviewed'
+      && $sortname != 'wordcount'
+      && $sortname != 'multimedia'
+      && $sortname != 'images'
+      && $sortname != 'videos'
+      && $sortname != 'audios'
+      && $sortname != 'links'
+      && $sortname != 'engagement1'
+      && $sortname != 'engagement2'
+      && $sortname != 'engagement3'
+      && $sortname != 'engagement4'
+      && $sortname != 'averageengagement'
+      && $sortname != 'maximumengagement'
+      && $sortname != 'firstpost'
+      && $sortname != 'lastpost'
+      && $sortname != 'reactionsgiven'
+      && $sortname != 'reactionsreceived'
+    )
+  ) return 'userid ASC';
+  if (strtolower($sorttype) != 'asc' && strtolower($sorttype) != 'desc') $sorttype = 'ASC';
+  return "{$sortname} {$sorttype}";
 }
