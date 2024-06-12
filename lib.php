@@ -337,49 +337,64 @@ function block_forum_report_get_mulutimedia_num($text)
 {
     global $CFG, $PAGE;
 
-    if (!is_string($text) or empty($text)) {
-        // non string data can not be filtered anyway
-        return 0;
-    }
-
-    if (stripos($text, '</a>') === false && stripos($text, '</video>') === false && stripos($text, '</audio>') === false && (stripos($text, '<img') === false)) {
-        // Performance shortcut - if there are no </a>, </video> or </audio> tags, nothing can match.
-        return 0;
-    }
-
-    // Looking for tags.
-    $matches = preg_split('/(<[^>]*>)/i', $text, -1, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE);
     $count = new stdClass();
     $count->num = 0;
     $count->img = 0;
     $count->video = 0;
     $count->audio = 0;
     $count->link = 0;
+
+    if (!is_string($text) or empty($text)) {
+        // non string data can not be filtered anyway
+        return $count;
+    }
+
+    if (stripos($text, '</a>') === false && stripos($text, '</video>') === false && stripos($text, '</audio>') === false && (stripos($text, '<img') === false)) {
+        // Performance shortcut - if there are no </a>, </video> or </audio> tags, nothing can match.
+        return $count;
+    }
+
+    // Looking for tags.
+    $matches = preg_split('/(<[^>]*>)/i', $text, -1, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE);
     if (!$matches) {
-        return 0;
+        return $count;
     } else {
         // Regex to find media extensions in an <a> tag.
         $embedmarkers = core_media_manager::instance()->get_embeddable_markers();
-        $re = '~<a\s[^>]*href="([^"]*(?:' .  $embedmarkers . ')[^"]*)"[^>]*>([^>]*)</a>~is';
 
         $tagname = '';
         foreach ($matches as $idx => $tag) {
             if (preg_match('/<(a|img|video|audio)\s[^>]*/', $tag, $tagmatches)) {
                 $tagname = strtolower($tagmatches[1]);
-                if ($tagname === "a" && preg_match($re, $tag)) {
-                    $count->num++;
-                    $count->link++;
-                } else {
-                    if ($tagname == "img") {
-                        $count->img++;
-                        $count->num++;
-                    } else if ($tagname == "video") {
+                if ($tagname === "a") {
+                    preg_match("<a\\s+href=\".*({$embedmarkers}).*\".*>", $tag, $embedmarkermatch);
+                    $embed = $embedmarkermatch[1] ? $embedmarkermatch[1] : null;
+                    if (
+                        $embed == '.fmp4' || $embed == '.mov' || $embed == '.mp4' || $embed == '.m4v' || $embed == '.ogv' || $embed == '.webm'
+                        || $embed == 'youtube.com' || $embed == 'youtube-nocookie.com' || $embed == 'youtu.be' || $embed == 'y2u.be'
+                        || $embed == 'youtube.com' || $embed == 'youtube-nocookie.com' || $embed == 'youtu.be' || $embed == 'y2u.be'
+                    ) {
                         $count->video++;
                         $count->num++;
-                    } else if ($tagname == "audio") {
+                    } else if (
+                        $embed == '.m3u8' || $embed == '.mpd' || $embed == '.aac' || $embed == '.flac' || $embed == '.mp3'
+                        || $embed == '.m4a' || $embed == '.oga' || $embed == '.ogg' || $embed == '.wav'
+                    ) {
                         $count->audio++;
                         $count->num++;
+                    } else {
+                        $count->link++;
+                        $count->num++;
                     }
+                } else if ($tagname == "img") {
+                    $count->img++;
+                    $count->num++;
+                } else if ($tagname == "video") {
+                    $count->video++;
+                    $count->num++;
+                } else if ($tagname == "audio") {
+                    $count->audio++;
+                    $count->num++;
                 }
             }
         }
@@ -427,12 +442,11 @@ function block_forum_report_countwordmultimedia(
     $params = [
         'userid' => $userid,
         'courseid' => $courseid,
-        'forumid1' => $forumid,
-        'forumid2' => $forumid,
+        'forumid1' => $forumid ? $forumid : 0,
+        'forumid2' => $forumid ? $forumid : 0,
         'contextlevel' => \core\context\module::LEVEL
     ];
     if ($starttime) $params['starttime'] = $starttime;
-    if ($endtime) $params['endtime'] = $endtime;
     $posts = $DB->get_records_sql($sql, $params);
     foreach ($posts as $post) {
         $multimedia = block_forum_report_get_mulutimedia_num($post->message);
