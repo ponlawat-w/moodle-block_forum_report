@@ -76,6 +76,7 @@ if ($action === 'view') {
         'scheduledtime' => $scheduledtime ? userdate($scheduledtime, get_string('strftimedaydatetime', 'langconfig')) : '-',
         'status' => $status[0],
         'statusclass' => $status[1],
+        'message' => $schedule->message,
         'country' => $schedule->country ? get_string_manager()->get_list_of_countries()[$schedule->country] : get_string('all'),
         'group' => $schedule->groupid ?
             $DB->get_record('groups', ['id' => $schedule->groupid], '*', MUST_EXIST)->name

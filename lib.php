@@ -447,6 +447,7 @@ function block_forum_report_countwordmultimedia(
         'contextlevel' => \core\context\module::LEVEL
     ];
     if ($starttime) $params['starttime'] = $starttime;
+    if ($endtime) $params['endtime'] = $endtime;
     $posts = $DB->get_records_sql($sql, $params);
     foreach ($posts as $post) {
         $multimedia = block_forum_report_get_mulutimedia_num($post->message);
@@ -547,7 +548,7 @@ function block_forum_report_executeschedule(stdClass $schedule) {
         return true;
     } catch (\Throwable $ex) {
         $schedule->status = BLOCK_FORUM_REPORT_STATUS_ERROR;
-        $schedule->message = $ex->getMessage();
+        $schedule->message = $ex->getMessage() . PHP_EOL . $ex->getTraceAsString();
         $schedule->processedtime = time();
         $DB->update_record('forum_report_schedules', $schedule);
         return false;
