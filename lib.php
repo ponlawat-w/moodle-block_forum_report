@@ -434,7 +434,6 @@ function block_forum_report_countwordmultimedia(
         SELECT fp.*, fd.forum
             FROM {forum_posts} fp
             JOIN {forum_discussions} fd ON fp.discussion = fd.id
-            JOIN {context} c ON c.contextlevel = :contextlevel AND c.instanceid = fd.forum
             WHERE fp.userid = :userid
                 AND ((:forumid1 = 0 AND fd.course = :courseid) OR fd.forum = :forumid2)
                 {$timecondition}
@@ -443,8 +442,7 @@ function block_forum_report_countwordmultimedia(
         'userid' => $userid,
         'courseid' => $courseid,
         'forumid1' => $forumid ? $forumid : 0,
-        'forumid2' => $forumid ? $forumid : 0,
-        'contextlevel' => \core\context\module::LEVEL
+        'forumid2' => $forumid ? $forumid : 0
     ];
     if ($starttime) $params['starttime'] = $starttime;
     if ($endtime) $params['endtime'] = $endtime;
@@ -472,8 +470,7 @@ function block_forum_report_countwordmultimedia(
 }
 
 function block_forum_report_reactforuminstalled() {
-    $pluginmanager = core_plugin_manager::instance();
-    return isset($pluginmanager->get_installed_plugins('local')['reactforum']);
+    return isset(\core\plugin_manager::instance()->get_installed_plugins('local')['reactforum']);
 }
 
 function block_forum_report_getreactionsgiven($userid, $courseid, $forumid, $starttime, $endtime) {
