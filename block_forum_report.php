@@ -14,8 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-require_once($CFG->libdir . '/navigationlib.php');
-
 defined('MOODLE_INTERNAL') || die();
 
 class block_forum_report extends block_base
