@@ -46,13 +46,13 @@ function block_forum_report_addschedule(stdClass $formdata, \core\context\block 
     $schedule->createdtime = time();
     $schedule->status = BLOCK_FORUM_REPORT_STATUS_SCHEDULED;
     $schedule->course = $formdata->course;
-    $schedule->country = $formdata->country ? $formdata->country : null;
-    $schedule->groupid = $formdata->group ? $formdata->group : null;
-    $schedule->forum = $formdata->forum ? $formdata->forum : null;
-    $schedule->starttime = $formdata->starttime ? $formdata->starttime : null;
-    $schedule->endtime = $formdata->endtime ? $formdata->endtime : null;
-    $schedule->engagementmethod = $formdata->engagementmethod ? $formdata->engagementmethod : null;
-    $schedule->engagementinternational = $formdata->engagementinternational ? $formdata->engagementinternational : null;
+    $schedule->country = isset($formdata->country) ? $formdata->country : null;
+    $schedule->groupid = isset($formdata->group) ? $formdata->group : null;
+    $schedule->forum = isset($formdata->forum) ? $formdata->forum : null;
+    $schedule->starttime = isset($formdata->starttime) ? $formdata->starttime : null;
+    $schedule->endtime = isset($formdata->endtime) ? $formdata->endtime : null;
+    $schedule->engagementmethod = isset($formdata->engagementmethod) ? $formdata->engagementmethod : null;
+    $schedule->engagementinternational = isset($formdata->engagementinternational) ? $formdata->engagementinternational : null;
 
     $schedule->id = $DB->insert_record('forum_report_schedules', $schedule);
 
@@ -479,7 +479,7 @@ function block_forum_report_getreactionsgiven($userid, $courseid, $forumid, $sta
     $timecondition = block_forum_report_gettimecondition('fp.created', $starttime, $endtime, '');
     $sql = <<<SQL
         SELECT COUNT(rr.id) reactionsgiven
-            FROM {reactforum_reacted} rr
+            FROM {local_reactforum_userreactions} rr
                 JOIN {forum_posts} fp ON rr.post = fp.id
                 JOIN {forum_discussions} fd ON fp.discussion = fd.id
             WHERE rr.userid = :userid
@@ -503,7 +503,7 @@ function block_forum_report_getreactionsreceived($userid, $courseid, $forumid, $
     $timecondition = block_forum_report_gettimecondition('fp.created', $starttime, $endtime, '');
     $sql = <<<SQL
         SELECT COUNT(rr.id) received
-            FROM {reactforum_reacted} rr
+            FROM {local_reactforum_userreactions} rr
             JOIN {forum_posts} fp ON rr.post = fp.id
             JOIN {forum_discussions} fd ON fp.discussion = fd.id
             WHERE fp.userid = :userid
@@ -690,7 +690,7 @@ function block_forum_report_getresultsrow($record) {
         $record->firstname,
         $record->lastname,
         $record->groups,
-        $_countries[$record->country],
+        isset($_countries[$record->country]) ? $_countries[$record->country] : '',
         $record->institution,
         $record->posts,
         $record->replies,
